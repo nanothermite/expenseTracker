@@ -1,0 +1,18 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET         /                          controllers.Application.index
+GET         /byMonth/:m/:uid           controllers.Application.byMonth(m: Integer, uid: Integer)
+GET         /byQuarter/:m/:uid         controllers.Application.byQuarter(m: Integer, uid: Integer)
+GET         /byCategory/:m/:uid        controllers.Application.byCategory(m: Integer, uid: Integer)
+
+# create objects
+POST        /addUser                   controllers.Application.addUser
+
+# drop existing objects
+DELETE      /dropUser/:userid          controllers.Application.dropUser(userid: Long)
+
+# Map static resources from the /public folder to the /assets URL path
+GET         /assets/*file              controllers.Assets.at(path="/public", file)
