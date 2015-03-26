@@ -18,46 +18,46 @@ import scala.collection.mutable.ArrayBuffer
  * Created by hkatz on 3/21/15.
  */
 @Entity
-@Table (name = "uzer")
+@Table(name = "uzer")
 class Uzer {
   @Id
-  var id:Long = 0l
+  var id: Long = 0l
 
   @Pattern(regexp = "[A-Za-z0-9 ]*", message = "must contain only letters, digits and spaces")
   @Constraints.MinLength(8)
   @Column
-  var username:String  = null
+  var username: String = null
 
   @NotNull
   @Column
-  var password:String = null
+  var password: String = null
 
   @NotNull
   @Column
-  var role:String = null
+  var role: String = null
 
   @NotNull
-  var nodata:String = null
+  var nodata: String = null
 
   @NotNull
-  var joined_date:Date = null
+  var joined_date: Date = null
 
   @OneToMany(targetEntity = classOf[Member], fetch = FetchType.LAZY, mappedBy = "uid")
-  var Memberses : util.List[Member] = _
+  var Memberses: util.List[Member] = _
 
   @OneToMany(targetEntity = classOf[Transactions], fetch = FetchType.LAZY, mappedBy = "userid")
-  var transactionses : util.List[Transactions] = _
+  var transactionses: util.List[Transactions] = _
 
   @OneToMany(targetEntity = classOf[Contact], fetch = FetchType.LAZY, mappedBy = "userid")
-  var contactses : util.List[Contact] = _
+  var contactses: util.List[Contact] = _
 
   var activation: String = null
 
-  var active_timestamp : Date = null
+  var active_timestamp: Date = null
 
-  var active : String  = null
+  var active: String = null
 
-  override def toString : String =  {
+  override def toString: String = {
     var s = ""
     if (id != 0l && username != null)
       s = f"$id%d - $username"
@@ -66,17 +66,17 @@ class Uzer {
 }
 
 object Uzer extends Dao(classOf[Uzer]) {
-  def all() : List[Uzer] = Uzer.find.findList().asScala.toList
+  def all(): List[Uzer] = Uzer.find.findList().asScala.toList
 
-  def allq(sql:RawSql) : List[Uzer] = {
+  def allq(sql: RawSql): List[Uzer] = {
     val q = find()
     q.setRawSql(sql)
     q.findList().asScala.toList
   }
 
-  def create(username:String, password:String, role: String, nodata: String,
-              joined_Date:Date, activation:String, active_timestamp: Date, active: String): Unit = {
-    var uz = new Uzer
+  def create(username: String, password: String, role: String, nodata: String,
+             joined_Date: Date, activation: String, active_timestamp: Date, active: String): Unit = {
+    val uz = new Uzer
     uz.username = username
     uz.password = password
     uz.role = role
@@ -88,41 +88,53 @@ object Uzer extends Dao(classOf[Uzer]) {
     save(uz)
   }
 
-  def getColOrder : ArrayBuffer[String]  = {
-    var colOrder = new ArrayBuffer[String]()
-    colOrder += "id"
-    colOrder += "username"
-    colOrder += "password"
-    colOrder += "role"
-    colOrder += "nodata"
-    colOrder += "joined_date"
-    colOrder += "activation"
-    colOrder += "active_timestamp"
-    colOrder += "active"
-    return colOrder
+  def getColOrder: List[String] = List("id","username","password","role","nodata","joined_date",
+    "activation","active_timestamp","active")
+
+  def getReqd: Map[String, Integer] = Map(
+    "username" -> 1,
+    "password" -> 1,
+    "role" -> 1,
+    "joined_date" -> 1,
+    "active" -> 1
+  )
+
+  def apply(username: String, password: String, role: String, nodata: Option[String],
+            joined_Date: Date, activation: Option[String], active_timestamp: Option[Date], active: String): Uzer = {
+    val uz = new Uzer
+    uz.username = username
+    uz.password = password
+    uz.role = role
+    if (nodata != None)
+      uz.nodata = nodata.get
+    uz.joined_date = joined_Date
+    if (activation != None)
+      uz.activation = activation.get
+    if (active_timestamp != None)
+      uz.active_timestamp = active_timestamp.get
+    uz.active = active
+    return uz
   }
 
-  def getReqd : java.util.Map[String, Integer] = {
-    var reqd = new java.util.HashMap[String, Integer]
-    reqd.put("username", 1)
-    reqd.put("password", 1)
-    reqd.put("role", 1)
-    reqd.put("joined_date", 1)
-    reqd.put("active", 1)
-    return reqd.asInstanceOf[java.util.Map[String, Integer]]
+  def apply2(username: Option[String], password: Option[String], role: Option[String], nodata: Option[String],
+            joined_Date: Option[Date], activation: Option[String], active_timestamp: Option[Date], active: Option[String]): Uzer = {
+    val uz = new Uzer
+    if (username != None)
+      uz.username = username.get
+    if (password != None)
+      uz.password = password.get
+    if (role != None)
+      uz.role = role.get
+    if (nodata != None)
+      uz.nodata = nodata.get
+    if (joined_Date != None)
+      uz.joined_date = joined_Date.get
+    if (activation != None)
+      uz.activation = activation.get
+    if (active_timestamp != None)
+      uz.active_timestamp = active_timestamp.get
+    if (active != None)
+      uz.active = active.get
+    return uz
   }
-   def apply(username:String, password:String, role: String, nodata: String,
-             joined_Date:Date, activation:String, active_timestamp: Date, active: String) : Uzer = {
-     var uz = new Uzer
-     uz.username = username
-     uz.password = password
-     uz.role = role
-     uz.nodata = nodata
-     uz.joined_date = joined_Date
-     uz.activation = activation
-     uz.active_timestamp = active_timestamp
-     uz.active = active
-     return uz
-   }
-
-  }
+}

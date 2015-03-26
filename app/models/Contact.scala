@@ -1,6 +1,7 @@
 package models
 
 import java.util
+import java.util.Date
 import javax.persistence._
 
 import com.avaje.ebean.RawSql
@@ -80,5 +81,41 @@ object Contact extends Dao(classOf[Contact]) {
   def getColOrder : List[String]  =
     List("bizname","industry","phone","city","state","identifier","userid")
 
-  def getReqd : Map[String, Integer] = Map("username" -> 1, "password" ->1, "role" -> 1, "joined_date" -> 1, "active" -> 1)
+  def getReqd : Map[String, Integer] = Map()
+
+  def apply(/*version:Integer,*/ bizname:Option[String], industry:Option[String], phone:Option[String], city:Option[String], state:Option[String], identifier:Option[String]): Contact = {
+    var contact = new Contact
+    //contact.version = version
+    if (bizname != None)
+      contact.bizname = bizname.get
+    if (industry != None)
+      contact.industry = industry.get
+    if (phone != None)
+      contact.phone = phone.get
+    if (city != None)
+      contact.city = city.get
+    if (state != None)
+      contact.state = state.get
+    if (identifier != None)
+      contact.identifier = identifier.get
+    return contact
+  }
+
+  def apply2(/*version:Integer,*/ bizname:Option[String], industry:Option[String], phone:Option[String], city:Option[String], state:Option[String], identifier:Option[String]): Contact = {
+    var contact = new Contact
+    //contact.version = version
+    if (bizname != None)
+      contact.bizname = bizname.get
+    if (industry != None)
+      contact.industry = industry.get
+    if (phone != None)
+      contact.phone = phone.get
+    if (city != None)
+      contact.city = city.get
+    if (state != None)
+      contact.state = state.get
+    if (identifier != None)
+      contact.identifier = identifier.get
+    return contact
+  }
 }

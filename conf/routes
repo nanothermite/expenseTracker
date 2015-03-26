@@ -3,16 +3,28 @@
 # ~~~~
 
 # Home page
-GET         /                          controllers.Application.index
-GET         /byMonth/:m/:uid           controllers.Application.byMonth(m: Integer, uid: Integer)
-GET         /byQuarter/:m/:uid         controllers.Application.byQuarter(m: Integer, uid: Integer)
-GET         /byCategory/:m/:uid        controllers.Application.byCategory(m: Integer, uid: Integer)
+GET           /                                     controllers.Application.index
+GET           /byMonth/:m/:uid                      controllers.Application.byMonth(m: Integer, uid: Integer)
+GET           /byQuarter/:m/:uid                    controllers.Application.byQuarter(m: Integer, uid: Integer)
+GET           /byCategory/:m/:uid                   controllers.Application.byCategory(m: Integer, uid: Integer)
 
 # create objects
-POST        /addUser                   controllers.Application.addUser
+POST          /addUser                              controllers.Application.addUser
+POST          /addMember/:userid                    controllers.Application.addMember(userid: Long)
+POST          /addContact/:userid                   controllers.Application.addContact(userid: Long)
+POST          /addXaction/:userid/:contactid        controllers.Application.addTransaction(userid: Long, contactid: Long)
+
+# update existing objects
+POST          /updateUser/:userid                   controllers.Application.updateUser(userid: Long)
+POST          /updateMember/:memberid               controllers.Application.updateMember(memberid: Long)
+POST          /updateContact/:contactid             controllers.Application.updateContact(contactid: Long)
+POST          /updateXaction/:xactid                controllers.Application.updateTransaction(xactid: Long)
 
 # drop existing objects
-DELETE      /dropUser/:userid          controllers.Application.dropUser(userid: Long)
+DELETE        /dropUser/:userid                     controllers.Application.dropUser(userid: Long)
+DELETE        /dropMember/:memberid                 controllers.Application.dropMember(memberid: Long)
+DELETE        /dropContact/:contactid               controllers.Application.dropContact(contactid: Long)
+DELETE        /dropXaction/:xactid                  controllers.Application.dropTransaction(xactid: Long)
 
 # Map static resources from the /public folder to the /assets URL path
-GET         /assets/*file              controllers.Assets.at(path="/public", file)
+GET           /assets/*file                         controllers.Assets.at(path="/public", file)

@@ -67,6 +67,68 @@ object Member extends Dao(classOf[Member]) {
     member.uid = uid
     save(member)
   }
+
+  def apply(email: String,fname: String,lname: String,phone_number: Option[String],`type`: String,
+            street1: Option[String],street2: Option[String],city: Option[String],state: Option[String],country: String,joined_date: Date,
+            ip: String,zip: String,userid: Option[String]): Member = {
+    val member = new Member
+    member.email = email
+    member.fname = fname
+    member.lname = lname
+    if (phone_number != None)
+      member.phone_number = phone_number.get
+    member.`type` = `type`
+    if (street1 != None)
+      member.street1 = street1.get
+    if (street2 != None)
+      member.street2 = street2.get
+    if (city != None)
+      member.city = city.get
+    if (state != None)
+      member.state = state.get
+    member.country = country
+    member.joined_date =joined_date
+    member.ip = ip
+    member.zip = zip
+    if (userid != None)
+      member.userid = userid.get
+    return member
+  }
+
+  def apply2(email: Option[String],fname: Option[String],lname: Option[String],phone_number: Option[String],`type`: Option[String],
+            street1: Option[String],street2: Option[String],city: Option[String],state: Option[String],country: Option[String],joined_date: Option[Date],
+            ip: Option[String],zip: Option[String],userid: Option[String]): Member = {
+    val member = new Member
+    if (email != None)
+      member.email = email.get
+    if (fname != None)
+      member.fname = fname.get
+    if (lname != None)
+      member.lname = lname.get
+    if (phone_number != None)
+      member.phone_number = phone_number.get
+    if (`type` != None)
+      member.`type` = `type`.get
+    if (street1 != None)
+      member.street1 = street1.get
+    if (street2 != None)
+      member.street2 = street2.get
+    if (city != None)
+      member.city = city.get
+    if (state != None)
+      member.state = state.get
+    if (country != None)
+      member.country = country.get
+    if (joined_date != None)
+      member.joined_date =joined_date.get
+    if (ip != None)
+      member.ip = ip.get
+    if (zip != None)
+      member.zip = zip.get
+    if (userid != None)
+      member.userid = userid.get
+    return member
+  }
 }
 
 @Entity

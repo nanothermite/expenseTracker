@@ -10,8 +10,8 @@ abstract class Dao[T](cls:Class[T]) {
   /**
    * Find by Id
    */
-  def find(id:Any):T = {
-    return Ebean.find(cls, id)
+  def find(id:Any):Option[T] = {
+    return Option(Ebean.find(cls, id))
   }
 
   /**
@@ -29,10 +29,17 @@ abstract class Dao[T](cls:Class[T]) {
   }
 
   /**
-   * Save (insert or update)
+   * Save (insert)
    */
   def save(o:Any):Unit = {
     Ebean.save(o)
+  }
+
+  /**
+   * Save (update)
+   */
+  def update(o:Any):Unit = {
+    Ebean.update(o)
   }
 
   /**

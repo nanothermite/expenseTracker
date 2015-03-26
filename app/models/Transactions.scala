@@ -43,7 +43,7 @@ object Transactions extends Dao(classOf[Transactions]){
   def create(id: Long,contact: Contact,userid: Uzer,trandate: Date,acct: String,vendor: String,
              description: String,phone: String,city: String,state: String,debit: Double,credit: Double,
              trantype: String): Unit = {
-    var trans = new Transactions
+    val trans = new Transactions
     trans.id = id
     trans.contact = contact
     trans.userid = userid
@@ -57,6 +57,59 @@ object Transactions extends Dao(classOf[Transactions]){
     trans.credit = credit
     trans.trantype = trantype
     save(trans)
+  }
+
+  def apply(trandate: Date,acct: Option[String],vendor: Option[String],
+            description: Option[String],phone: Option[String],city: Option[String],state: Option[String],
+            debit: Option[Double],credit: Option[Double], trantype: Option[String]): Transactions = {
+    val trans = new Transactions
+    trans.trandate = trandate
+    if (acct != None)
+      trans.acct = acct.get
+    if (vendor != None)
+    trans.vendor = vendor.get
+    if (description != None)
+      trans.description = description.get
+    if (phone != None)
+    trans.phone = phone.get
+    if (city != None)
+      trans.city = city.get
+    if (state != None)
+      trans.state = state.get
+    if (debit != None)
+      trans.debit = debit.get
+    if (credit != None)
+      trans.credit = credit.get
+    if (trantype != None)
+      trans.trantype = trantype.get
+    return trans
+  }
+
+  def apply2(trandate: Option[Date],acct: Option[String],vendor: Option[String],
+            description: Option[String],phone: Option[String],city: Option[String],state: Option[String],
+            debit: Option[Double],credit: Option[Double], trantype: Option[String]): Transactions = {
+    val trans = new Transactions
+    if (trandate != None)
+      trans.trandate = trandate.get
+    if (acct != None)
+      trans.acct = acct.get
+    if (vendor != None)
+      trans.vendor = vendor.get
+    if (description != None)
+      trans.description = description.get
+    if (phone != None)
+      trans.phone = phone.get
+    if (city != None)
+      trans.city = city.get
+    if (state != None)
+      trans.state = state.get
+    if (debit != None)
+      trans.debit = debit.get
+    if (credit != None)
+      trans.credit = credit.get
+    if (trantype != None)
+      trans.trantype = trantype.get
+    return trans
   }
 }
 
