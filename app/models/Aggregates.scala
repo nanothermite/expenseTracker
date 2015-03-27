@@ -1,14 +1,13 @@
 package models
 
-import java.util
 import javax.persistence._
 
 import com.avaje.ebean.RawSql
 import com.avaje.ebean.annotation.Sql
 import common.Dao
 
-import scala.collection.JavaConverters._
 import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
  * Created by hkatz on 3/20/15.
@@ -23,8 +22,18 @@ class Aggregates {
 }
 
 object Aggregates extends Dao(classOf[Aggregates]){
+  /**
+   *
+   * @return
+   */
   def all() : List[Aggregates] = Aggregates.find.findList().asScala.toList
 
+  /**
+   *
+   * @param sql
+   * @param pList
+   * @return
+   */
   def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[Aggregates] = {
     val q = Aggregates.find()
     if (!pList.isEmpty)

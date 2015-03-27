@@ -3,16 +3,13 @@ package models
 import java.util
 import java.util.Date
 import javax.persistence._
-import javax.validation.constraints.Pattern
-import javax.validation.constraints.NotNull
+import javax.validation.constraints.{NotNull, Pattern}
 
 import com.avaje.ebean.RawSql
-
 import common.Dao
 import play.data.validation.Constraints
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * Created by hkatz on 3/21/15.

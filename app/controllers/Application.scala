@@ -14,11 +14,14 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, HashMap}
 import scala.reflect.runtime.{universe => ru}
 import scala.reflect.runtime.universe._
+import scala.reflect._
 
 object Application extends Controller {
 
+  val m = ru.runtimeMirror(getClass.getClassLoader)
+
   var colOrder = new ArrayBuffer[String]()
-  var colMap = new java.util.HashMap[String, String]()
+  var colMap = scala.collection.mutable.Map[String, String]()
   var pList = new java.util.HashMap[String, Object]()
   val datePattern = "yyyy-MM-dd"
 
@@ -58,8 +61,8 @@ object Application extends Controller {
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "m.email = :email"
-  val byUsernamesql = "select m.id, m.email, m.fname, m.phone_number, m.type, m.street1, m.street2, " +
-    "m.city, m.state, m.country, m.joined_date, m.ip, m.lname, m.zip, m.userid, u.id " +
+  val byUsernamesql = "select m.id, m.email, m.fname, m.lname, m.phone_number, m.type, m.street1, m.street2, " +
+    "m.city, m.state, m.country, m.joined_date, m.ip,  m.zip, m.userid, u.id " +
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "u.username = :username"
@@ -68,28 +71,30 @@ object Application extends Controller {
     Ok(views.html.index("Your new application is ready."))
   }
 
-  def genSql(query: String, colMap: java.util.HashMap[String, String], pList: java.util.HashMap[String, AnyRef]): RawSql = {
+  def genSql(query: String, colMap: scala.collection.mutable.Map[String, String], pList: java.util.HashMap[String, AnyRef]): RawSql = {
     val rawSqlBld = RawSqlBuilder.parse(query)
-    for (keyCol <- colMap.keySet) {
-      rawSqlBld.columnMapping(keyCol, colMap.get(keyCol))
+    for ((k, v) <- colMap) {
+      rawSqlBld.columnMapping(k, v)
     }
     rawSqlBld.create()
   }
 
-  def getList[_](getter: String, query: String, colMap: java.util.HashMap[String, String],
-                 pList: java.util.HashMap[String, AnyRef], cl: Class[_]): List[_] = {
+  def getType[T: TypeTag](obj: T) = typeOf[T]
+  def getTypeTag[T: TypeTag](obj: T) = typeTag[T]
+  def getClassTag[T: ClassTag](obj: T) = classTag[T]
+
+  def getList[T : TypeTag](getter: String, query: String, colMap: scala.collection.mutable.Map[String, String],
+                 pList: java.util.HashMap[String, AnyRef], t: T): List[T] = {
     val rawSql = genSql(query, colMap, pList)
-    val m = ru.runtimeMirror(getClass.getClassLoader)
-    val obj = methodByReflectionO(getter, m, cl)
-    obj(rawSql, Some(pList)).asInstanceOf[List[_]]
+    val myType = getType(t)
+    val obj = methodByReflectionO[T](getter, m, myType)
+    obj(rawSql, Some(pList)).asInstanceOf[List[T]]
   }
 
-  def genJson[_](colOrder: Array[String], outputPage: List[Aggregates], cl: Class[_]): Json = {
-    val jTag: Json = jString("data")
+  def genJson[T: TypeTag : ClassTag](colOrder: Array[String], outputPage: List[T], m: ru.Mirror): Json = {
     var jRows: ArrayBuffer[Json] = new ArrayBuffer[Json](outputPage.length)
-    val m = ru.runtimeMirror(cl.getClassLoader)
     for (agg <- outputPage) {
-      var jRowBuf: ArrayBuffer[Json] = jsonByReflection(colOrder, m, agg)
+      val jRowBuf: ArrayBuffer[Json] = jsonByReflection[T](colOrder, m, agg)
       jRows += Json.obj("vals" -> jArray(jRowBuf.toList))
     }
     val jRowsList: Json = jArray(jRows.toList)
@@ -102,19 +107,20 @@ object Application extends Controller {
     im.reflectMethod(methodX)
   }
 
-  def methodByReflectionO(name: String, m: ru.Mirror, obj: AnyRef): MethodMirror = {
-    val modX = ru.typeOf[Aggregates.type].termSymbol.asModule
-    val methodX = ru.typeOf[Aggregates.type].decl(ru.TermName(name)).asMethod
+  def methodByReflectionO[T : TypeTag](name: String, m: ru.Mirror, tru: Type): MethodMirror = {
+    val modX = tru.termSymbol.asModule
+    val methodX = tru.decl(ru.TermName(name)).asMethod
     val mm = m.reflectModule(modX)
     val im = m.reflect(mm.instance)
     im.reflectMethod(methodX)
   }
 
-  def jsonByReflection(colOrder: Array[String], m: ru.Mirror, agg: Aggregates): ArrayBuffer[Json] = {
+  def jsonByReflection[T : TypeTag : ClassTag](colOrder: Array[String], m: ru.Mirror, agg: T): ArrayBuffer[Json] = {
     var jRowBuf: ArrayBuffer[Json] = new ArrayBuffer[Json]()
+    val myType = getType(agg)
     for (col <- colOrder) {
-      val fieldTermSymb = ru.typeOf[agg.type].decl(ru.TermName(col)).asTerm
-      val im = m.reflect(agg)
+      val fieldTermSymb = myType.decl(ru.TermName(col)).asTerm
+      val im = m.reflect[T](agg)(getClassTag(agg))
       val fieldMirror = im.reflectField(fieldTermSymb)
 
       jRowBuf += (if (fieldMirror.get == null) jString("")
@@ -122,7 +128,8 @@ object Application extends Controller {
         fieldMirror.get match {
           case _: String => jString(fieldMirror.get.toString)
           case _: lang.Double => jNumber(fieldMirror.get.asInstanceOf[lang.Double])
-          //            case _:java.lang.Integer => (fieldMirror.get.asInstanceOf[java.lang.Integer])
+          case _: lang.Long => jNumber(fieldMirror.get.asInstanceOf[lang.Long].toLong)
+          case _: lang.Integer => jNumber(fieldMirror.get.asInstanceOf[lang.Integer].toDouble)
           case _: Date => jString(fieldMirror.get.asInstanceOf[Date].formatted("MM/dd/yyyy"))
         }
       })
@@ -138,18 +145,17 @@ object Application extends Controller {
     colOrder += "periodType"
 
     colMap.clear()
-    colMap.put("sum(s.credit)", "credit")
-    colMap.put("sum(s.debit)", "debit")
-    colMap.put("cast(extract(month from s.trandate) as text)", "period")
-    colMap.put("'N'", "periodType")
+    colMap += "sum(s.credit)" -> "credit"
+    colMap += "sum(s.debit)" -> "debit"
+    colMap += "cast(extract(month from s.trandate) as text)" -> "period"
+    colMap += "'N'" -> "periodType"
 
     pList.clear()
-    pList.put("year", year)
-    pList.put("userid", uid)
+    pList += "year" -> year
+    pList += "userid" -> uid
 
-    val myCl = classOf[Aggregates]
-    val aggList = getList("allq", byMonthsql, colMap, pList, myCl)
-    val result = genJson(colOrder.toArray, aggList.asInstanceOf[List[Aggregates]], myCl)
+    val aggList = getList("allq", byMonthsql, colMap, pList, Aggregates)
+    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]], m)
     Ok(result.nospaces)
   }
 
@@ -170,9 +176,8 @@ object Application extends Controller {
     pList += "year" -> year
     pList += "userid" -> uid
 
-    val myCl = classOf[Aggregates]
-    val aggList = getList("allq", byCategorysql, colMap, pList, myCl)
-    val result = genJson(colOrder.toArray, aggList.asInstanceOf[List[Aggregates]], myCl)
+    val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates)
+    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]], m)
     Ok(result.nospaces)
   }
 
@@ -193,13 +198,23 @@ object Application extends Controller {
     pList += "year" -> year
     pList += "userid" -> uid
 
-    val myCl = classOf[Aggregates]
-    val aggList = getList("allq", byQuartersql, colMap, pList, myCl)
-    val result = genJson(colOrder.toArray, aggList.asInstanceOf[List[Aggregates]], myCl)
+    val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates)
+    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]], m)
     Ok(result.nospaces)
   }
 
-  def byEmail(email: String): Result = {
+  def byEmail(email: String)=  Action {
+    colOrder.clear()
+    colOrder += "id"
+    colOrder += "username"
+    colOrder += "password"
+    colOrder += "role"
+    colOrder += "nodata"
+    colOrder += "joined_date"
+    colOrder += "activation"
+    colOrder += "active_timestamp"
+    colOrder += "active"
+
     colMap.clear()
     colMap += "u.id" -> "id"
     colMap += "u.username" -> "username"
@@ -214,38 +229,51 @@ object Application extends Controller {
     pList.clear()
     pList += "email" -> email
 
-    val myCl = classOf[Uzer]
-    val aggList = getList("allq", byEmailsql, colMap, pList, myCl) //, Uzer.class)
-    //val result = genJson(Uzer.getColOrder().toArray, aggList)
-    return Ok //(result)
+    val aggList = getList("allq", byEmailsql, colMap, pList, EmailUser)
+    val result = genJson(colOrder.toArray, aggList.asInstanceOf[List[EmailUser]], m)
+    Ok(result.nospaces)
   }
 
-  def byUsername(username: String): Result = {
-    colMap.clear();
-    colMap.put("m.id", "id");
-    colMap.put("m.email", "email");
-    colMap.put("m.fname", "fname");
-    colMap.put("m.phone_number", "phone_number");
-    colMap.put("m.type", "type");
-    colMap.put("m.street1", "street1");
-    colMap.put("m.street2", "street2");
-    colMap.put("m.city", "city");
-    colMap.put("m.state", "state");
-    colMap.put("m.country", "country");
-    colMap.put("m.joined_date", "joined_date");
-    colMap.put("m.ip", "ip");
-    colMap.put("m.lname", "lname");
-    colMap.put("m.zip", "zip");
-    colMap.put("m.userid", "userid");
-    colMap.put("u.id", "uid.id");
+  def byUsername(username: String) = Action {
+    colMap.clear()
+    colMap += "m.id" -> "id"
+    colMap += "m.email" -> "email"
+    colMap += "m.fname" -> "fname"
+    colMap += "m.phone_number" -> "phone_number"
+    colMap += "m.type" -> "type"
+    colMap += "m.street1" -> "street1"
+    colMap += "m.street2" -> "street2"
+    colMap += "m.city" -> "city"
+    colMap += "m.state" -> "state"
+    colMap += "m.country" -> "country"
+    colMap += "m.joined_date" -> "joined_date"
+    colMap += "m.ip" -> "ip"
+    colMap += "m.lname" -> "lname"
+    colMap += "m.zip" -> "zip"
+    colMap += "m.userid" -> "userid"
+    colMap += "u.id" -> "uid"
 
-    pList.clear();
-    pList.put("username", username);
+    pList.clear()
+    pList += "username" -> username
 
-    val myCl = classOf[Member]
-    val aggList = getList("allq", byUsernamesql, colMap, pList, myCl) //, Member.class);
-    //val result = genJson(Member.getColOrder(), aggList);
-    return Ok //(result);
+    val aggList = getList("allq", byUsernamesql, colMap, pList, MemberUser)
+    val result = genJson(Member.getColOrder.toArray[String], aggList.asInstanceOf[List[MemberUser]], m)
+    Ok(result.nospaces)
+  }
+
+  def byYears(uid: Integer) = Action {
+    colOrder.clear()
+    colOrder +="year"
+
+    colMap.clear()
+    colMap += "extract(year from t.trandate)" -> "year"
+
+    pList.clear()
+    pList += "userid" -> uid
+
+    val aggList = getList("allq", getYearssql, colMap, pList, Years)
+    val result = genJson(colOrder.toArray[String], aggList.asInstanceOf[List[Years]], m)
+    Ok(result.nospaces)
   }
 
   /**
@@ -342,7 +370,6 @@ object Application extends Controller {
       (JsPath \ "city").readNullable[String] and
       (JsPath \ "state").readNullable[String] and
       (JsPath \ "identifier").readNullable[String]// and
-      //(JsPath \ "userid").read[Uzer]
     )(Contact.apply _)
 
   def addContact(userid: Long) = Action(BodyParsers.parse.json) { request =>

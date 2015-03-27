@@ -7,6 +7,9 @@ GET           /                                     controllers.Application.inde
 GET           /byMonth/:m/:uid                      controllers.Application.byMonth(m: Integer, uid: Integer)
 GET           /byQuarter/:m/:uid                    controllers.Application.byQuarter(m: Integer, uid: Integer)
 GET           /byCategory/:m/:uid                   controllers.Application.byCategory(m: Integer, uid: Integer)
+GET           /byEmail/:email                       controllers.Application.byEmail(email: String)
+GET           /byUsername/:username                 controllers.Application.byUsername(username: String)
+GET           /getYears/:uid                        controllers.Application.byYears(uid: Integer)
 
 # create objects
 POST          /addUser                              controllers.Application.addUser

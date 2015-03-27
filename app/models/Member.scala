@@ -1,7 +1,5 @@
 package models
 
-
-import java.util
 import java.util.Date
 
 import com.avaje.ebean.RawSql
