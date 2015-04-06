@@ -1,26 +1,26 @@
 package controllers
 
-import java.lang
 import java.util.Date
 
+import argonaut.Argonaut._
+import argonaut._
 import com.avaje.ebean._
-import argonaut._, Argonaut._
 import models._
+import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads}
 import play.api.mvc._
-import play.api.libs.functional.syntax._
 
 import scala.collection.JavaConversions._
-import scala.collection.mutable.{ArrayBuffer, HashMap}
-import scala.reflect.runtime.{universe => ru}
-import scala.reflect.runtime.universe._
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.reflect._
+import scala.reflect.runtime.universe._
+import scala.reflect.runtime.{universe => ru}
 
 object Application extends Controller {
 
   val m = ru.runtimeMirror(getClass.getClassLoader)
 
-  var colOrder = new ArrayBuffer[String]()
+  var colOrder = Seq.empty[String] //new ArrayBuffer[String]()
   var colMap = scala.collection.mutable.Map[String, String]()
   var pList = new java.util.HashMap[String, Object]()
   val datePattern = "yyyy-MM-dd"
@@ -71,7 +71,7 @@ object Application extends Controller {
     Ok(views.html.index("Your new application is ready."))
   }
 
-  def genSql(query: String, colMap: scala.collection.mutable.Map[String, String], pList: java.util.HashMap[String, AnyRef]): RawSql = {
+  def genSql(query: String, colMap: scala.collection.mutable.Map[String, String]): RawSql = {
     val rawSqlBld = RawSqlBuilder.parse(query)
     for ((k, v) <- colMap) {
       rawSqlBld.columnMapping(k, v)
@@ -83,20 +83,39 @@ object Application extends Controller {
   def getTypeTag[T: TypeTag](obj: T) = typeTag[T]
   def getClassTag[T: ClassTag](obj: T) = classTag[T]
 
+  /**
+   * generate collection of T objects using getter
+   * @param getter
+   * @param query
+   * @param colMap
+   * @param pList
+   * @param t
+   * @tparam T
+   * @return
+   */
   def getList[T : TypeTag](getter: String, query: String, colMap: scala.collection.mutable.Map[String, String],
                  pList: java.util.HashMap[String, AnyRef], t: T): List[T] = {
-    val rawSql = genSql(query, colMap, pList)
+    val rawSql = genSql(query, colMap)
     val myType = getType(t)
     val obj = methodByReflectionO[T](getter, m, myType)
     obj(rawSql, Some(pList)).asInstanceOf[List[T]]
   }
 
-  def genJson[T: TypeTag : ClassTag](colOrder: Array[String], outputPage: List[T], m: ru.Mirror): Json = {
+  /**
+   * generate Json return
+   * @param colOrder
+   * @param outputPage
+   * @tparam T
+   * @return
+   */
+  def genJson[T: TypeTag : ClassTag](colOrder: Array[String], outputPage: List[T] /*, m: ru.Mirror */): Json = {
     var jRows: ArrayBuffer[Json] = new ArrayBuffer[Json](outputPage.length)
-    for (agg <- outputPage) {
-      val jRowBuf: ArrayBuffer[Json] = jsonByReflection[T](colOrder, m, agg)
-      jRows += Json.obj("vals" -> jArray(jRowBuf.toList))
-    }
+    val newRow =
+      for {
+        agg <- outputPage
+        jRowBuf: List[Json] = jsonByReflection[T](colOrder, m, agg)
+      } yield Json.obj("vals" -> jArray(jRowBuf.toList))
+    jRows ++= newRow
     val jRowsList: Json = jArray(jRows.toList)
     Json.obj("data" -> jRowsList)
   }
@@ -115,34 +134,40 @@ object Application extends Controller {
     im.reflectMethod(methodX)
   }
 
-  def jsonByReflection[T : TypeTag : ClassTag](colOrder: Array[String], m: ru.Mirror, agg: T): ArrayBuffer[Json] = {
-    var jRowBuf: ArrayBuffer[Json] = new ArrayBuffer[Json]()
-    val myType = getType(agg)
-    for (col <- colOrder) {
-      val fieldTermSymb = myType.decl(ru.TermName(col)).asTerm
-      val im = m.reflect[T](agg)(getClassTag(agg))
-      val fieldMirror = im.reflectField(fieldTermSymb)
-
-      jRowBuf += (if (fieldMirror.get == null) jString("")
-      else {
-        fieldMirror.get match {
-          case _: String => jString(fieldMirror.get.toString)
-          case _: lang.Double => jNumber(fieldMirror.get.asInstanceOf[lang.Double])
-          case _: lang.Long => jNumber(fieldMirror.get.asInstanceOf[lang.Long].toLong)
-          case _: lang.Integer => jNumber(fieldMirror.get.asInstanceOf[lang.Integer].toDouble)
-          case _: Date => jString(fieldMirror.get.asInstanceOf[Date].formatted("MM/dd/yyyy"))
-        }
-      })
+  def mirrorObjMatch[T : TypeTag : ClassTag](obj : Any) : Json =
+    obj match {
+      case _: String => jString(obj.toString)
+      case _: Double => jNumber(obj.asInstanceOf[Double])
+      case _: Long => jNumber(obj.asInstanceOf[Long])
+      case _: Integer => jNumber(obj.asInstanceOf[Integer].toDouble)
+      case _: Date => jString(obj.asInstanceOf[Date].formatted("MM/dd/yyyy"))
+      case _: Any => jString("")
     }
-    jRowBuf
+
+  def jsonByReflection[T : TypeTag : ClassTag](colOrder: Array[String], m: ru.Mirror, agg: T): List[Json] = {
+    val jRowBuf = new ListBuffer[Json]()
+    val myType = getType(agg)
+    val newRow =
+      for {
+        col <- colOrder
+        fieldTermSymb = myType.decl(ru.TermName(col)).asTerm
+        im = m.reflect[T](agg)(getClassTag(agg))
+        fieldMirror = im.reflectField(fieldTermSymb)
+        obj = fieldMirror.get
+    } yield  { if (Option(obj) == None) jString("") else mirrorObjMatch(obj) }
+    jRowBuf ++=  newRow
+    jRowBuf.toList
   }
 
+  /**
+   * aggregate by month for a selected year for a particular userid
+   * @param year
+   * @param uid
+   * @return
+   */
   def byMonth(year: Integer, uid: Integer) = Action {
     colOrder.clear()
-    colOrder += "credit"
-    colOrder += "debit"
-    colOrder += "period"
-    colOrder += "periodType"
+    colOrder = Seq("credit","debit","period","periodType")
 
     colMap.clear()
     colMap += "sum(s.credit)" -> "credit"
@@ -155,16 +180,19 @@ object Application extends Controller {
     pList += "userid" -> uid
 
     val aggList = getList("allq", byMonthsql, colMap, pList, Aggregates)
-    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]], m)
+    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]) //, m)
     Ok(result.nospaces)
   }
 
+  /**
+   * aggregate by category for a particular year for a userid
+   * @param year
+   * @param uid
+   * @return
+   */
   def byCategory(year: Integer, uid: Integer) = Action {
     colOrder.clear()
-    colOrder += "credit"
-    colOrder += "debit"
-    colOrder += "period"
-    colOrder += "periodType"
+    colOrder = Seq("credit","debit","period","periodType")
 
     colMap.clear()
     colMap += "sum(u.credit)" -> "credit"
@@ -177,16 +205,19 @@ object Application extends Controller {
     pList += "userid" -> uid
 
     val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates)
-    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]], m)
+    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]) //, m)
     Ok(result.nospaces)
   }
 
+  /**
+   * pivot by Quarter
+   * @param year
+   * @param uid
+   * @return
+   */
   def byQuarter(year: Integer, uid: Integer) = Action {
     colOrder.clear()
-    colOrder += "credit"
-    colOrder += "debit"
-    colOrder += "period"
-    colOrder += "periodType"
+    colOrder = Seq("credit","debit","period","periodType")
 
     colMap.clear()
     colMap += "sum(s.credit)" -> "credit"
@@ -199,21 +230,18 @@ object Application extends Controller {
     pList += "userid" -> uid
 
     val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates)
-    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]], m)
+    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]) //, m)
     Ok(result.nospaces)
   }
 
+  /**
+   * find by email
+   * @param email
+   * @return
+   */
   def byEmail(email: String)=  Action {
     colOrder.clear()
-    colOrder += "id"
-    colOrder += "username"
-    colOrder += "password"
-    colOrder += "role"
-    colOrder += "nodata"
-    colOrder += "joined_date"
-    colOrder += "activation"
-    colOrder += "active_timestamp"
-    colOrder += "active"
+    colOrder = Seq("id","username","password","role","nodata","joined_date","activation","active_timestamp","active")
 
     colMap.clear()
     colMap += "u.id" -> "id"
@@ -230,10 +258,15 @@ object Application extends Controller {
     pList += "email" -> email
 
     val aggList = getList("allq", byEmailsql, colMap, pList, EmailUser)
-    val result = genJson(colOrder.toArray, aggList.asInstanceOf[List[EmailUser]], m)
+    val result = genJson(colOrder.toArray, aggList.asInstanceOf[List[EmailUser]]) //, m)
     Ok(result.nospaces)
   }
 
+  /**
+   * show username records
+   * @param username
+   * @return
+   */
   def byUsername(username: String) = Action {
     colMap.clear()
     colMap += "m.id" -> "id"
@@ -257,13 +290,17 @@ object Application extends Controller {
     pList += "username" -> username
 
     val aggList = getList("allq", byUsernamesql, colMap, pList, MemberUser)
-    val result = genJson(Member.getColOrder.toArray[String], aggList.asInstanceOf[List[MemberUser]], m)
+    val result = genJson(Member.getColOrder.toArray[String], aggList.asInstanceOf[List[MemberUser]]) //, m)
     Ok(result.nospaces)
   }
 
+  /**
+   * show years for user
+   * @param uid
+   * @return
+   */
   def byYears(uid: Integer) = Action {
-    colOrder.clear()
-    colOrder +="year"
+    colOrder = Seq("year")
 
     colMap.clear()
     colMap += "extract(year from t.trandate)" -> "year"
@@ -272,7 +309,7 @@ object Application extends Controller {
     pList += "userid" -> uid
 
     val aggList = getList("allq", getYearssql, colMap, pList, Years)
-    val result = genJson(colOrder.toArray[String], aggList.asInstanceOf[List[Years]], m)
+    val result = genJson(colOrder.toArray[String], aggList.asInstanceOf[List[Years]]) //, m)
     Ok(result.nospaces)
   }
 
@@ -282,14 +319,13 @@ object Application extends Controller {
    * @return
    */
   def dropUser(userid: Long) = Action {
-    var ret = Ok
-    val existingObj = Uzer.find(userid)
-    if (existingObj == null) {
-      ret = BadRequest
+    val curResult = Uzer.find(userid)
+    if (curResult != None) {
+      Uzer.delete(curResult.get)
+      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(userid)).nospaces)
     } else {
-      Uzer.delete(existingObj)
+      BadRequest(Json.obj("status" -> jString("NF")).nospaces)
     }
-    ret
   }
 
   /**
@@ -300,7 +336,7 @@ object Application extends Controller {
   def dropMember(memberid: Long) = Action {
     val curResult = Member.find(memberid)
     if (curResult != None) {
-      Uzer.delete(curResult.get)
+      Member.delete(curResult.get)
       Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(memberid)).nospaces)
     } else {
       BadRequest(Json.obj("status" -> jString("NF")).nospaces)
