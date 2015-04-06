@@ -1,3 +1,0 @@
-#!/bin/bash
-
-DATABASE_URL=jdbc:postgresql://berne/finance_dev DATABASE_USER=biz DATABASE_PWD=bts1ebtm activator -jvm-debug 9999
