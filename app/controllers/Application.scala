@@ -373,6 +373,9 @@ object Application extends Controller {
     }
   }
 
+  /**
+   * not that nullable values become options
+   */
   implicit val uzerReads: Reads[Uzer] = (
     (JsPath \ "username").read[String] and
       (JsPath \ "password").read[String] and
@@ -384,6 +387,10 @@ object Application extends Controller {
       (JsPath \ "active").read[String]
     )(Uzer.apply _)
 
+  /**
+   * post new user object
+   * @return
+   */
   def addUser = Action(BodyParsers.parse.json) { request =>
     val uzerRes = request.body.validate[Uzer]
     uzerRes.fold(
@@ -398,6 +405,9 @@ object Application extends Controller {
     )
   }
 
+  /**
+   * almost all nullable
+   */
   implicit val contactReads: Reads[Contact] = (
     //(JsPath \ "version").read[Integer] and
       (JsPath \ "bizname").readNullable[String] and
@@ -408,6 +418,11 @@ object Application extends Controller {
       (JsPath \ "identifier").readNullable[String]// and
     )(Contact.apply _)
 
+  /**
+   * post object as new contact, child of user
+   * @param userid
+   * @return
+   */
   def addContact(userid: Long) = Action(BodyParsers.parse.json) { request =>
     //val contactJson = request.body.asJson
     val contactRes = request.body.validate[Contact]
@@ -431,6 +446,9 @@ object Application extends Controller {
     )
   }
 
+  /**
+   * member has a few reqd props
+   */
   implicit val memberReads: Reads[Member] = (
     (JsPath \ "email").read[String] and
       (JsPath \ "fname").read[String] and
@@ -448,6 +466,11 @@ object Application extends Controller {
       (JsPath \ "userid").readNullable[String]
     )(Member.apply _)
 
+  /**
+   * post member object, also child of user
+   * @param userid
+   * @return
+   */
   def addMember(userid: Long) = Action(BodyParsers.parse.json) { request =>
     val memberRes = request.body.validate[Member]
     memberRes.fold(
@@ -469,6 +492,9 @@ object Application extends Controller {
     )
   }
 
+  /**
+   * transaction is almost all nullable
+   */
   implicit val transactionReads: Reads[Transactions] = (
     (JsPath \ "trandate").read[Date] and
       (JsPath \ "acct").readNullable[String] and
@@ -482,6 +508,12 @@ object Application extends Controller {
       (JsPath \ "trantype").readNullable[String]
     )(Transactions.apply _)
 
+  /**
+   * post a transaction object, child of user and contact
+   * @param userid
+   * @param contactId
+   * @return
+   */
   def addTransaction(userid: Long, contactId: Long) = Action(BodyParsers.parse.json) { request =>
     val transRes = request.body.validate[Transactions]
     transRes.fold(
@@ -506,6 +538,9 @@ object Application extends Controller {
     )
   }
 
+  /**
+   * user is all nullable for updates
+   */
   val uzerUpdateReads : Reads[Uzer] = (
     (JsPath \ "username").readNullable[String] and
       (JsPath \ "password").readNullable[String] and
@@ -517,6 +552,11 @@ object Application extends Controller {
       (JsPath \ "active").readNullable[String]
     )(Uzer.apply2 _)
 
+  /**
+   * update user
+   * @param userid
+   * @return
+   */
   def updateUser(userid: Long) = Action(BodyParsers.parse.json) { request =>
     val uzerRes = request.body.validate[Uzer](uzerUpdateReads)
     uzerRes.fold(
@@ -538,6 +578,9 @@ object Application extends Controller {
     )
   }
 
+  /**
+   * update member nothing required
+   */
   val memberUpdateReads: Reads[Member] = (
     (JsPath \ "email").readNullable[String] and
       (JsPath \ "fname").readNullable[String] and
@@ -555,6 +598,11 @@ object Application extends Controller {
       (JsPath \ "userid").readNullable[String]
     )(Member.apply2 _)
 
+  /**
+   * update member
+   * @param memberid
+   * @return
+   */
   def updateMember(memberid: Long) = Action(BodyParsers.parse.json) { request =>
     val memberRes = request.body.validate[Member](memberUpdateReads)
     memberRes.fold(
@@ -576,6 +624,9 @@ object Application extends Controller {
     )
   }
 
+  /**
+   * update contact - nothing reqd
+   */
   val contactUpdateReads: Reads[Contact] = (
     //(JsPath \ "version").read[Integer] and
     (JsPath \ "bizname").readNullable[String] and
@@ -586,6 +637,11 @@ object Application extends Controller {
       (JsPath \ "identifier").readNullable[String]
     )(Contact.apply2 _)
 
+  /**
+   * update contact object
+   * @param contactid
+   * @return
+   */
   def updateContact(contactid: Long) = Action(BodyParsers.parse.json) { request =>
     val contactRes = request.body.validate[Contact](contactUpdateReads)
     contactRes.fold(
@@ -607,6 +663,9 @@ object Application extends Controller {
     )
   }
 
+  /**
+   * update transaction - nothing reqd
+   */
   val transactionUpdateReads: Reads[Transactions] = (
     (JsPath \ "trandate").readNullable[Date] and
       (JsPath \ "acct").readNullable[String] and
@@ -620,6 +679,11 @@ object Application extends Controller {
       (JsPath \ "trantype").readNullable[String]
     )(Transactions.apply2 _)
 
+  /**
+   * update transaction object
+   * @param xactid
+   * @return
+   */
   def updateTransaction(xactid: Long) = Action(BodyParsers.parse.json) { request =>
     val xactRes = request.body.validate[Transactions](transactionUpdateReads)
     xactRes.fold(
@@ -630,7 +694,7 @@ object Application extends Controller {
         val newxact = xactRes.get
         val curResult = Transactions.find(xactid)
         if (curResult != None) {
-          val curxact = curResult.get
+          val curxact = curResult.get         // needed for update below
           newxact.id = xactid
           Transactions.update(newxact)
           Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(xactid)).nospaces)
