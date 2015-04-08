@@ -98,7 +98,7 @@ object Contact extends Dao(classOf[Contact]) {
       contact.state = state.get
     if (identifier != None)
       contact.identifier = identifier.get
-    return contact
+    contact
   }
 
   def apply2(/*version:Integer,*/ bizname:Option[String], industry:Option[String], phone:Option[String], city:Option[String], state:Option[String], identifier:Option[String]): Contact = {
@@ -116,6 +116,6 @@ object Contact extends Dao(classOf[Contact]) {
       contact.state = state.get
     if (identifier != None)
       contact.identifier = identifier.get
-    return contact
+    contact
   }
 }

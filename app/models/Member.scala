@@ -90,7 +90,7 @@ object Member extends Dao(classOf[Member]) {
     member.zip = zip
     if (userid != None)
       member.userid = userid.get
-    return member
+    member
   }
 
   def apply2(email: Option[String],fname: Option[String],lname: Option[String],phone_number: Option[String],`type`: Option[String],
@@ -125,7 +125,7 @@ object Member extends Dao(classOf[Member]) {
       member.zip = zip.get
     if (userid != None)
       member.userid = userid.get
-    return member
+    member
   }
 }
 

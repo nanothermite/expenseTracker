@@ -110,7 +110,7 @@ object Uzer extends Dao(classOf[Uzer]) {
     if (active_timestamp != None)
       uz.active_timestamp = active_timestamp.get
     uz.active = active
-    return uz
+    uz
   }
 
   def apply2(username: Option[String], password: Option[String], role: Option[String], nodata: Option[String],
@@ -132,6 +132,6 @@ object Uzer extends Dao(classOf[Uzer]) {
       uz.active_timestamp = active_timestamp.get
     if (active != None)
       uz.active = active.get
-    return uz
+    uz
   }
 }

@@ -82,7 +82,7 @@ object Transactions extends Dao(classOf[Transactions]){
       trans.credit = credit.get
     if (trantype != None)
       trans.trantype = trantype.get
-    return trans
+    trans
   }
 
   def apply2(trandate: Option[Date],acct: Option[String],vendor: Option[String],
@@ -109,7 +109,7 @@ object Transactions extends Dao(classOf[Transactions]){
       trans.credit = credit.get
     if (trantype != None)
       trans.trantype = trantype.get
-    return trans
+    trans
   }
 }
 
