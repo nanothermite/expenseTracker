@@ -29,5 +29,11 @@ DELETE        /dropMember/:memberid                 controllers.Application.drop
 DELETE        /dropContact/:contactid               controllers.Application.dropContact(contactid: Long)
 DELETE        /dropXaction/:xactid                  controllers.Application.dropTransaction(xactid: Long)
 
+# memcached ops
+GET           /memadd/:k/:v                         controllers.Application.memadd(k: String, v: String)
+GET           /memset/:k/:v                         controllers.Application.memset(k: String, v: String)
+GET           /memget/:k                            controllers.Application.memget(k: String)
+GET           /memdel/:k                            controllers.Application.memdrop(k: String)
+
 # Map static resources from the /public folder to the /assets URL path
 GET           /assets/*file                         controllers.Assets.at(path="/public", file)

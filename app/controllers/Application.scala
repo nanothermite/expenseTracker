@@ -2,19 +2,25 @@ package controllers
 
 import java.util.Date
 
+import _root_.common.Shared
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean._
 import models._
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, Reads}
+import play.api.libs.json.{JsValue, JsPath, Reads}
 import play.api.mvc._
-
+import shade.memcached.Memcached
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.concurrent.{Promise, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+import concurrent.duration._
 import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
+import scala.util.{Failure, Success}
+import scala.util.control.Exception.Catcher
 
 object Application extends Controller {
 
@@ -66,6 +72,10 @@ object Application extends Controller {
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "u.username = :username"
+
+  val myCache:Memcached = Shared.memd.get
+  val minDuration:Duration = 1.milli
+  val maxDuration:Duration = 2.milli
 
   def index = Action {
     Ok(views.html.index("Your new application is ready."))
@@ -120,12 +130,27 @@ object Application extends Controller {
     Json.obj("data" -> jRowsList)
   }
 
+  /**
+   * reflection on Class
+   * @param name
+   * @param m
+   * @param obj
+   * @return
+   */
   def methodByReflectionC(name: String, m: ru.Mirror, obj: AnyRef): MethodMirror = {
     val methodX = ru.typeOf[obj.type].decl(ru.TermName(name)).asMethod
     val im = m.reflect(obj)
     im.reflectMethod(methodX)
   }
 
+  /**
+   * reflection on Object
+   * @param name
+   * @param m
+   * @param tru
+   * @tparam T
+   * @return
+   */
   def methodByReflectionO[T : TypeTag](name: String, m: ru.Mirror, tru: Type): MethodMirror = {
     val modX = tru.termSymbol.asModule
     val methodX = tru.decl(ru.TermName(name)).asMethod
@@ -190,48 +215,64 @@ object Application extends Controller {
    * @param uid
    * @return
    */
-  def byCategory(year: Integer, uid: Integer) = Action {
-    colOrder.clear()
-    colOrder = Seq("credit","debit","period","periodType")
+  def byCategory(year: Integer, uid: Integer) = Action.async {
+    val key = s"cat-$year-$uid"
+    getSeq(key).map {
+      case i: Option[String] =>
+        Ok(if (i != None) i.get else {
+          colOrder = Seq("credit", "debit", "period", "periodType")
 
-    colMap.clear()
-    colMap += "sum(u.credit)" -> "credit"
-    colMap += "sum(u.debit)" -> "debit"
-    colMap += "u.trantype" -> "period"
-    colMap += "'S'" -> "periodType"
+          colMap = collection.mutable.Map("sum(u.credit)" -> "credit",
+            "sum(u.debit)" -> "debit",
+            "u.trantype" -> "period",
+            "'S'" -> "periodType")
 
-    pList.clear()
-    pList += "year" -> year
-    pList += "userid" -> uid
+          pList.clear()
+          pList += "year" -> year
+          pList += "userid" -> uid
 
-    val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates)
-    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]) //, m)
-    Ok(result.nospaces)
+          val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates)
+          if (aggList.size != 0) {
+            val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]).nospaces
+            setSeq(key, result)
+            result
+          } else """{none}"""
+        })
+      case t: AnyRef => Ok("broke")
+    }
   }
 
   /**
    * pivot by Quarter
-   * @param year
-   * @param uid
+   * @param year YYYY
+   * @param uid userid
    * @return
    */
-  def byQuarter(year: Integer, uid: Integer) = Action {
-    colOrder.clear()
-    colOrder = Seq("credit","debit","period","periodType")
+  def byQuarter(year: Integer, uid: Integer) = Action.async {
+    val key = s"qrt-$year-$uid"
+    getSeq(key).map {
+      case i: Option[String] =>
+        Ok(if (i != None) i.get else {
+          colOrder = Seq("credit","debit","period","periodType")
 
-    colMap.clear()
-    colMap += "sum(s.credit)" -> "credit"
-    colMap += "sum(s.debit)" -> "debit"
-    colMap += "cast(extract(quarter from s.trandate) as text)" -> "period"
-    colMap += "'N'" -> "periodType"
+          colMap = collection.mutable.Map("sum(s.credit)" -> "credit",
+            "sum(s.debit)" -> "debit",
+            "cast(extract(quarter from s.trandate) as text)" -> "period",
+            "'N'" -> "periodType")
 
-    pList.clear()
-    pList += "year" -> year
-    pList += "userid" -> uid
+          pList.clear()
+          pList += "year" -> year
+          pList += "userid" -> uid
 
-    val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates)
-    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]) //, m)
-    Ok(result.nospaces)
+          val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates)
+          if (aggList.size != 0) {
+            val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]).nospaces
+            setSeq(key, result)
+            result
+          } else """{none}"""
+        })
+      case t: AnyRef => Ok("broke")
+    }
   }
 
   /**
@@ -684,7 +725,7 @@ object Application extends Controller {
    * @param xactid
    * @return
    */
-  def updateTransaction(xactid: Long) = Action(BodyParsers.parse.json) { request =>
+  def updateTransaction(xactid: Long): Action[JsValue] = Action(BodyParsers.parse.json) { request =>
     val xactRes = request.body.validate[Transactions](transactionUpdateReads)
     xactRes.fold(
       errors => {
@@ -703,5 +744,117 @@ object Application extends Controller {
         }
       }
     )
+  }
+
+  /**
+   *
+   * actual work horse adding means only add key if not present
+   * @param key string
+   * @param value string
+   * @return
+   */
+  def addSeq(key:String, value: String) : Future[Any] = {
+    Future.firstCompletedOf(Seq(myCache.add(key, value, minDuration), play.api.libs.concurrent.Promise.timeout("Oops", maxDuration)))
+  }
+
+  /**
+   *
+   * actual work horse setting
+   * @param key string
+   * @param value string
+   * @return
+   */
+  def setSeq(key:String, value: String) : Future[Any] = {
+    Future.firstCompletedOf(Seq(myCache.set(key, value, minDuration), play.api.libs.concurrent.Promise.timeout("Oops", maxDuration)))
+  }
+
+  /**
+   * actual work horse getting
+   * @param key string
+   * @return
+   */
+  def getSeq(key:String) : Future[Any] = {
+    Future.firstCompletedOf(Seq(myCache.get[String](key), play.api.libs.concurrent.Promise.timeout("Oops", minDuration)))
+  }
+
+  /**
+   * actual work horse deleting
+   * @param key string
+   * @return
+   */
+  def delSeq(key:String) : Future[Any] = {
+    Future.firstCompletedOf(Seq(myCache.delete(key), play.api.libs.concurrent.Promise.timeout("Oops", maxDuration)))
+  }
+
+  /**
+   * actual work horse deleting
+   * @param key string
+   * @return
+   */
+  def compareSetSeq(key:String, newVal:String) : Future[Any] = {
+    Future.firstCompletedOf(Seq(myCache.compareAndSet(key, Some(key), newVal, minDuration), play.api.libs.concurrent.Promise.timeout("Oops", maxDuration)))
+  }
+
+  /**
+   * set cache key to value asynchronously
+   * @param key string
+   * @param value string
+   * @return
+   */
+  def memadd(key: String, value: String) = Action.async {
+    addSeq(key, value).map {
+      case i : Boolean   => Ok(if (i) "ok" else "exists")
+      case t : AnyRef    => Ok("unset")
+    }
+  }
+
+  /**
+   * set cache key to value asynchronously
+   * @param key string
+   * @param value string
+   * @return
+   */
+  def memset(key: String, value: String) = Action.async {
+    setSeq(key, value).map {
+      case i : Unit   => Ok("ok")
+      case t : AnyRef => Ok("unset")
+    }
+  }
+
+  /**
+   * blocking version
+   * @param key string
+   * @return
+   */
+  def memgetBlock(key: String) = Action {
+    val res = myCache.awaitGet[String](key) match {
+      case Some(value) => value
+      case None        => s"key $key not found"
+    }
+    Ok(res)
+  }
+
+  /**
+   * asynch get key for minDuration
+   * @param key string
+   * @return
+   */
+  def memget(key: String) = Action.async {
+    getSeq(key).map {
+      case i: Option[String] => Ok(if (i != None) i.get else "nf")
+      case t: AnyRef => Ok("broke")
+    }
+  }
+
+  /**
+   * async drop key for minDuration
+   * @param key string
+   * @return
+   */
+  def memdrop(key: String) = Action.async {
+    delSeq(key).map {
+      case i: Boolean => Ok(if (i) "hit" else "miss")
+      case t: AnyRef => Ok("broke")
+    }
   }
 }
