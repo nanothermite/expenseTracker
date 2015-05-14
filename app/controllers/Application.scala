@@ -60,7 +60,7 @@ object Application extends Controller with myTypes {
   val getYearssql = "select distinct extract(year from t.trandate) as year " +
     "from Transactions t " +
     "where userid = :userid " +
-    "order by 1";
+    "order by 1"
   val byEmailsql = "select u.id, u.username, u.password, u.role, " +
     "u.nodata, u.joined_date, u.activation, u.active_timestamp, u.active " +
     "from Member m, Uzer u " +
@@ -90,12 +90,12 @@ object Application extends Controller with myTypes {
 
   /**
    * generate collection of T objects using getter
-   * @param getter
-   * @param query
-   * @param colMap
-   * @param pList
-   * @param t
-   * @tparam T
+   * @param getter method to invoke
+   * @param query  actual
+   * @param colMap for ebean
+   * @param pList  parameters to query
+   * @param t      for reflection
+   * @tparam T     reflection on return type
    * @return
    */
   def getList[T : TypeTag](getter: String, query: String, colMap: scala.collection.mutable.Map[String, String],
@@ -108,12 +108,12 @@ object Application extends Controller with myTypes {
 
   /**
    * generate Json return
-   * @param colOrder
-   * @param outputPage
-   * @tparam T
+   * @param colOrder column seq
+   * @param outputPage values
+   * @tparam T  generic
    * @return
    */
-  def genJson[T: TypeTag : ClassTag](colOrder: Array[String], outputPage: List[T] /*, m: ru.Mirror */): Json = {
+  def genJson[T: TypeTag : ClassTag](colOrder: Array[String], outputPage: List[T]): Json = {
     var jRows: ArrayBuffer[Json] = new ArrayBuffer[Json](outputPage.length)
     val newRow =
       for {
@@ -127,9 +127,9 @@ object Application extends Controller with myTypes {
 
   /**
    * reflection on Class
-   * @param name
-   * @param m
-   * @param obj
+   * @param name  method
+   * @param m     runtime mirror
+   * @param obj   values in obj
    * @return
    */
   def methodByReflectionC(name: String, m: ru.Mirror, obj: AnyRef): MethodMirror = {
@@ -140,10 +140,10 @@ object Application extends Controller with myTypes {
 
   /**
    * reflection on Object
-   * @param name
-   * @param m
-   * @param tru
-   * @tparam T
+   * @param name method
+   * @param m    runtime
+   * @param tru  reflection
+   * @tparam T   internals
    * @return
    */
   def methodByReflectionO[T : TypeTag](name: String, m: ru.Mirror, tru: Type): MethodMirror = {
@@ -174,15 +174,15 @@ object Application extends Controller with myTypes {
         im = m.reflect[T](agg)(getClassTag(agg))
         fieldMirror = im.reflectField(fieldTermSymb)
         obj = fieldMirror.get
-    } yield  { if (Option(obj) == None) jString("") else mirrorObjMatch(obj) }
+    } yield  { if (Option(obj).isEmpty) jString("") else mirrorObjMatch(obj) }
     jRowBuf ++=  newRow
     jRowBuf.toList
   }
 
   /**
    * aggregate by month for a selected year for a particular userid
-   * @param year
-   * @param uid
+   * @param year key
+   * @param uid user
    * @return
    */
   def byMonth(year: Integer, uid: Integer) = Action {
@@ -205,8 +205,8 @@ object Application extends Controller with myTypes {
 
   /**
    * aggregate by category for a particular year for a userid
-   * @param year
-   * @param uid
+   * @param year key
+   * @param uid  user
    * @return
    */
   def byCategory(year: Integer, uid: Integer) = Action.async {
@@ -226,7 +226,7 @@ object Application extends Controller with myTypes {
           pList += "userid" -> uid
 
           val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates)
-          if (aggList.size != 0) {
+          if (aggList.nonEmpty) {
             val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]).nospaces
             setSeq(key, result)
             result
@@ -259,7 +259,7 @@ object Application extends Controller with myTypes {
           pList += "userid" -> uid
 
           val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates)
-          if (aggList.size != 0) {
+          if (aggList.nonEmpty) {
             val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]).nospaces
             setSeq(key, result)
             result
@@ -271,7 +271,7 @@ object Application extends Controller with myTypes {
 
   /**
    * find by email
-   * @param email
+   * @param email key
    * @return
    */
   def byEmail(email: String)=  Action {
@@ -298,7 +298,7 @@ object Application extends Controller with myTypes {
 
   /**
    * show username records
-   * @param username
+   * @param username key
    * @return
    */
   def byUsername(username: String) = Action {
@@ -330,7 +330,7 @@ object Application extends Controller with myTypes {
 
   /**
    * show years for user
-   * @param uid
+   * @param uid key
    * @return
    */
   def byYears(uid: Integer) = Action {
@@ -349,12 +349,12 @@ object Application extends Controller with myTypes {
 
   /**
    * delete properties of existing object
-   * @param userid
+   * @param userid key
    * @return
    */
   def dropUser(userid: Long) = Action {
     val curResult = Uzer.find(userid)
-    if (curResult != None) {
+    if (curResult.isDefined) {
       Uzer.delete(curResult.get)
       Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(userid)).nospaces)
     } else {
@@ -364,12 +364,12 @@ object Application extends Controller with myTypes {
 
   /**
    * delete properties of existing object
-   * @param memberid
+   * @param memberid keys
    * @return
    */
   def dropMember(memberid: Long) = Action {
     val curResult = Member.find(memberid)
-    if (curResult != None) {
+    if (curResult.isDefined) {
       Member.delete(curResult.get)
       Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(memberid)).nospaces)
     } else {
@@ -379,12 +379,12 @@ object Application extends Controller with myTypes {
 
   /**
    * delete properties of existing object
-   * @param contactid
+   * @param contactid key
    * @return
    */
   def dropContact(contactid: Long) = Action {
     val curResult = Contact.find(contactid)
-    if (curResult != None) {
+    if (curResult.isDefined) {
       Contact.delete(curResult.get)
       Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contactid)).nospaces)
     } else {
@@ -394,12 +394,12 @@ object Application extends Controller with myTypes {
 
   /**
    * delete properties of existing object
-   * @param xactid
+   * @param xactid key
    * @return
    */
   def dropTransaction(xactid: Long) = Action {
     val curResult = Transactions.find(xactid)
-    if (curResult != None) {
+    if (curResult.isDefined) {
       Transactions.delete(curResult.get)
       Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(xactid)).nospaces)
     } else {
@@ -425,7 +425,7 @@ object Application extends Controller with myTypes {
    * post new user object
    * @return
    */
-  def addUser = Action(BodyParsers.parse.json) { request =>
+  def addUser() = Action(BodyParsers.parse.json) { request =>
     val uzerRes = request.body.validate[Uzer]
     uzerRes.fold(
       errors => {
@@ -454,8 +454,8 @@ object Application extends Controller with myTypes {
 
   /**
    * post object as new contact, child of user
-   * @param userid
-   * @return
+   * @param userid key
+   * @return async return
    */
   def addContact(userid: Long) = Action(BodyParsers.parse.json) { request =>
     //val contactJson = request.body.asJson
@@ -468,7 +468,7 @@ object Application extends Controller with myTypes {
         val contact = contactRes.get
         var parent = new Uzer
         val parentResult = Uzer.find(userid)
-        if (parentResult != None) {
+        if (parentResult.isDefined) {
           parent = parentResult.get
           contact.userid = parent
           Contact.save(contact)
@@ -502,7 +502,7 @@ object Application extends Controller with myTypes {
 
   /**
    * post member object, also child of user
-   * @param userid
+   * @param userid key
    * @return
    */
   def addMember(userid: Long) = Action(BodyParsers.parse.json) { request =>
@@ -544,8 +544,8 @@ object Application extends Controller with myTypes {
 
   /**
    * post a transaction object, child of user and contact
-   * @param userid
-   * @param contactId
+   * @param userid    parent key
+   * @param contactId child key
    * @return
    */
   def addTransaction(userid: Long, contactId: Long) = Action(BodyParsers.parse.json) { request =>
@@ -558,7 +558,7 @@ object Application extends Controller with myTypes {
         val trans = transRes.get
         val parentResult = Uzer.find(userid)
         val contactResult = Contact.find(contactId)
-        if (parentResult != None && contactResult != None) {
+        if (parentResult.isDefined && contactResult.isDefined) {
           val parent = parentResult.get
           val contact = contactResult.get
           trans.userid = parent
@@ -588,7 +588,7 @@ object Application extends Controller with myTypes {
 
   /**
    * update user
-   * @param userid
+   * @param userid key
    * @return
    */
   def updateUser(userid: Long) = Action(BodyParsers.parse.json) { request =>
@@ -600,7 +600,7 @@ object Application extends Controller with myTypes {
       uz => {
         val newuzer = uzerRes.get
         val curResult = Uzer.find(userid)
-        if (curResult != None) {
+        if (curResult.isDefined) {
           val curuzer = curResult.get
           newuzer.id = userid
           Uzer.update(newuzer)
@@ -634,7 +634,7 @@ object Application extends Controller with myTypes {
 
   /**
    * update member
-   * @param memberid
+   * @param memberid key
    * @return
    */
   def updateMember(memberid: Long) = Action(BodyParsers.parse.json) { request =>
@@ -646,7 +646,7 @@ object Application extends Controller with myTypes {
       uz => {
         val newmember = memberRes.get
         val curResult = Member.find(memberid)
-        if (curResult != None) {
+        if (curResult.isDefined) {
           val curmember = curResult.get
           newmember.id = memberid
           Member.update(newmember)
@@ -673,7 +673,7 @@ object Application extends Controller with myTypes {
 
   /**
    * update contact object
-   * @param contactid
+   * @param contactid key
    * @return
    */
   def updateContact(contactid: Long) = Action(BodyParsers.parse.json) { request =>
@@ -685,7 +685,7 @@ object Application extends Controller with myTypes {
       uz => {
         val newcontact = contactRes.get
         val curResult = Contact.find(contactid)
-        if (curResult != None) {
+        if (curResult.isDefined) {
           val curcontact = curResult.get
           newcontact.id = contactid
           Contact.update(newcontact)
@@ -715,7 +715,7 @@ object Application extends Controller with myTypes {
 
   /**
    * update transaction object
-   * @param xactid
+   * @param xactid key
    * @return
    */
   def updateTransaction(xactid: Long): Action[JsValue] = Action(BodyParsers.parse.json) { request =>
@@ -727,7 +727,7 @@ object Application extends Controller with myTypes {
       uz => {
         val newxact = xactRes.get
         val curResult = Transactions.find(xactid)
-        if (curResult != None) {
+        if (curResult.isDefined) {
           val curxact = curResult.get         // needed for update below
           newxact.id = xactid
           Transactions.update(newxact)
