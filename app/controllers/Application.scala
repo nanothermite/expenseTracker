@@ -2,27 +2,26 @@ package controllers
 
 import java.util.Date
 
-import _root_.common.Shared
+import _root_.common.{myTypes, Shared}
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean._
 import models._
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsValue, JsPath, Reads}
+import play.api.libs.json.{JsPath, JsValue, Reads}
 import play.api.mvc._
 import shade.memcached.Memcached
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.concurrent.{Promise, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import concurrent.duration._
+import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
-import scala.util.{Failure, Success}
-import scala.util.control.Exception.Catcher
 
-object Application extends Controller {
+object Application extends Controller with myTypes {
 
   val m = ru.runtimeMirror(getClass.getClassLoader)
 
@@ -88,10 +87,6 @@ object Application extends Controller {
     }
     rawSqlBld.create()
   }
-
-  def getType[T: TypeTag](obj: T) = typeOf[T]
-  def getTypeTag[T: TypeTag](obj: T) = typeTag[T]
-  def getClassTag[T: ClassTag](obj: T) = classTag[T]
 
   /**
    * generate collection of T objects using getter
@@ -191,7 +186,6 @@ object Application extends Controller {
    * @return
    */
   def byMonth(year: Integer, uid: Integer) = Action {
-    colOrder.clear()
     colOrder = Seq("credit","debit","period","periodType")
 
     colMap.clear()
@@ -218,8 +212,8 @@ object Application extends Controller {
   def byCategory(year: Integer, uid: Integer) = Action.async {
     val key = s"cat-$year-$uid"
     getSeq(key).map {
-      case i: Option[String] =>
-        Ok(if (i != None) i.get else {
+      case Some(i: String) =>
+        Ok(if (i != None) i else {
           colOrder = Seq("credit", "debit", "period", "periodType")
 
           colMap = collection.mutable.Map("sum(u.credit)" -> "credit",
@@ -251,8 +245,8 @@ object Application extends Controller {
   def byQuarter(year: Integer, uid: Integer) = Action.async {
     val key = s"qrt-$year-$uid"
     getSeq(key).map {
-      case i: Option[String] =>
-        Ok(if (i != None) i.get else {
+      case Some(i:String) =>
+        Ok(if (i != None) i else {
           colOrder = Seq("credit","debit","period","periodType")
 
           colMap = collection.mutable.Map("sum(s.credit)" -> "credit",
@@ -281,7 +275,6 @@ object Application extends Controller {
    * @return
    */
   def byEmail(email: String)=  Action {
-    colOrder.clear()
     colOrder = Seq("id","username","password","role","nodata","joined_date","activation","active_timestamp","active")
 
     colMap.clear()
@@ -841,7 +834,7 @@ object Application extends Controller {
    */
   def memget(key: String) = Action.async {
     getSeq(key).map {
-      case i: Option[String] => Ok(if (i != None) i.get else "nf")
+      case Some(i: String) => Ok(if (i != None) i else "nf")
       case t: AnyRef => Ok("broke")
     }
   }
