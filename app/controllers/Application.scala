@@ -71,6 +71,7 @@ object Application extends Controller with myTypes {
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "u.username = :username"
+
   val myCache:Memcached = Shared.memd.get
   val minDuration:Duration = 1.milli
   val maxDuration:Duration = 2.milli
