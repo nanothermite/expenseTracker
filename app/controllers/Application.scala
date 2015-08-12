@@ -1,16 +1,19 @@
 package controllers
 
+import java.nio.charset.Charset
 import java.util.Date
 
-import _root_.common.{myTypes, Shared}
+import _root_.common.{Shared, myTypes}
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean._
 import models._
+import play.api.http.{ContentTypeOf, ContentTypes, Writeable}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, JsValue, Reads}
 import play.api.mvc._
 import shade.memcached.Memcached
+import utils.Sha256
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -21,7 +24,7 @@ import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
 
-object Application extends Controller with myTypes {
+object Application extends Controller with myTypes with Sha256 {
 
   val m = ru.runtimeMirror(getClass.getClassLoader)
 
@@ -67,7 +70,11 @@ object Application extends Controller with myTypes {
     "where m.uid = u.id and " +
     "m.email = :email"
   val byUsernamesql = "select m.id, m.email, m.fname, m.lname, m.phone_number, m.type, m.street1, m.street2, " +
-    "m.city, m.state, m.country, m.joined_date, m.ip,  m.zip, m.userid, u.id " +
+    "m.city, m.state, m.country, m.joined_date, m.ip,  m.zip, m.userid, u.id, u.password " +
+    "from Member m, Uzer u " +
+    "where m.uid = u.id and " +
+    "u.username = :username"
+  val validatesql = "select u.password " +
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "u.username = :username"
@@ -296,6 +303,20 @@ object Application extends Controller with myTypes {
     Ok(result.nospaces)
   }
 
+  def validateUser(name: String, passwd: String) = Action {
+    colMap.clear()
+    colMap += "u.password" -> "password"
+
+    pList.clear()
+    pList += "username" -> name
+
+    val pwdList = getList("allq", validatesql, colMap, pList, MemberUser)
+    val pwdHash = if (pwdList.headOption != None) pwdList.head.asInstanceOf[MemberUser].password else ""
+    val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
+    val jsRet = Json.jString(if (valid) "auth" else "denied")
+    Ok(Json.obj("access"->jsRet).nospaces)
+  }
+
   /**
    * show username records
    * @param username key
@@ -319,12 +340,13 @@ object Application extends Controller with myTypes {
     colMap += "m.zip" -> "zip"
     colMap += "m.userid" -> "userid"
     colMap += "u.id" -> "uid"
+    colMap += "u.password" -> "password"
 
     pList.clear()
     pList += "username" -> username
 
     val aggList = getList("allq", byUsernamesql, colMap, pList, MemberUser)
-    val result = genJson(Member.getColOrder.toArray[String], aggList.asInstanceOf[List[MemberUser]]) //, m)
+    val result = genJson(MemberUser.getColOrder.toArray[String], aggList.asInstanceOf[List[MemberUser]]) //, m)
     Ok(result.nospaces)
   }
 
@@ -849,5 +871,13 @@ object Application extends Controller with myTypes {
       case i: Boolean => Ok(if (i) "hit" else "miss")
       case t: AnyRef => Ok("broke")
     }
+  }
+
+  implicit def contentTypeOf_ArgonautJson(implicit codec: Codec): ContentTypeOf[argonaut.Json] = {
+    ContentTypeOf[argonaut.Json](Some(ContentTypes.JSON))
+  }
+
+  implicit def writeableOf_ArgonautJson(implicit codec: Codec): Writeable[argonaut.Json] = {
+    Writeable(jsval => codec.encode(jsval.toString))
   }
 }

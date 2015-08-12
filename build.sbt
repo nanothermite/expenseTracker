@@ -16,4 +16,6 @@ libraryDependencies ++= Seq(
   "com.bionicspirit" %% "shade" % "1.6.0"
 )
 
-resolvers += "Spy" at "http://files.couchbase.com/maven2/"
+resolvers ++= Seq(
+   "Spy" at "http://files.couchbase.com/maven2/"
+)

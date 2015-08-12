@@ -1,11 +1,13 @@
 package common
 
-import com.avaje.ebean.{Query, Ebean}
+import com.avaje.ebean.{Ebean, Query}
+
+import scala.reflect.runtime.universe._
 
 /**
  * Created by hkatz on 3/20/15.
  */
-abstract class Dao[T](cls:Class[T]) {
+abstract class Dao[T](cls:Class[T]) extends myTypes {
 
   /**
    * Find by Id
@@ -25,7 +27,7 @@ abstract class Dao[T](cls:Class[T]) {
    * return a reference
    */
   def ref(id:Any):T = {
-    return Ebean.getReference(cls, id)
+    Ebean.getReference(cls, id)
   }
 
   /**
@@ -47,5 +49,9 @@ abstract class Dao[T](cls:Class[T]) {
    */
   def delete(o:Any):Unit = {
     Ebean.delete(o)
+  }
+
+  def createQuery[T : TypeTag](c : Class[T], n: String) : Query[T] = {
+    Ebean.createNamedQuery[T](c, n)
   }
 }

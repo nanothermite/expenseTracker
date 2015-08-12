@@ -30,13 +30,13 @@ object Aggregates extends Dao(classOf[Aggregates]){
 
   /**
    *
-   * @param sql
-   * @param pList
+   * @param sql query
+   * @param pList param list
    * @return
    */
   def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[Aggregates] = {
     val q = Aggregates.find()
-    if (!pList.isEmpty)
+    if (pList.isDefined)
         for ((k:String,v:Object) <- pList.get) {
           q.setParameter(k, v)
         }

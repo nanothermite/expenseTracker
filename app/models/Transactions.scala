@@ -1,12 +1,11 @@
 package models
 
 import java.util.Date
+import javax.persistence._
 
 import com.avaje.ebean.RawSql
 import common.Dao
 import play.data.validation.Constraints
-import javax.persistence._
-import java.util
 
 import scala.collection.JavaConverters._
 
@@ -14,7 +13,7 @@ import scala.collection.JavaConverters._
  * Created by hkatz on 9/5/14.
  */
 object Transactions extends Dao(classOf[Transactions]){
-  def all() : List[Transactions] = Transactions.find.findList().asScala.toList
+  def all() : List[Transactions] = Transactions.find().findList().asScala.toList
 
   def allq(sql:RawSql) : List[Transactions] = {
     val q = find()
@@ -64,23 +63,23 @@ object Transactions extends Dao(classOf[Transactions]){
             debit: Option[Double],credit: Option[Double], trantype: Option[String]): Transactions = {
     val trans = new Transactions
     trans.trandate = trandate
-    if (acct != None)
+    if (acct.isDefined)
       trans.acct = acct.get
-    if (vendor != None)
+    if (vendor.isDefined)
     trans.vendor = vendor.get
-    if (description != None)
+    if (description.isDefined)
       trans.description = description.get
-    if (phone != None)
+    if (phone.isDefined)
     trans.phone = phone.get
-    if (city != None)
+    if (city.isDefined)
       trans.city = city.get
-    if (state != None)
+    if (state.isDefined)
       trans.state = state.get
-    if (debit != None)
+    if (debit.isDefined)
       trans.debit = debit.get
-    if (credit != None)
+    if (credit.isDefined)
       trans.credit = credit.get
-    if (trantype != None)
+    if (trantype.isDefined)
       trans.trantype = trantype.get
     trans
   }
@@ -89,31 +88,54 @@ object Transactions extends Dao(classOf[Transactions]){
             description: Option[String],phone: Option[String],city: Option[String],state: Option[String],
             debit: Option[Double],credit: Option[Double], trantype: Option[String]): Transactions = {
     val trans = new Transactions
-    if (trandate != None)
+    if (trandate.isDefined)
       trans.trandate = trandate.get
-    if (acct != None)
+    if (acct.isDefined)
       trans.acct = acct.get
-    if (vendor != None)
+    if (vendor.isDefined)
       trans.vendor = vendor.get
-    if (description != None)
+    if (description.isDefined)
       trans.description = description.get
-    if (phone != None)
+    if (phone.isDefined)
       trans.phone = phone.get
-    if (city != None)
+    if (city.isDefined)
       trans.city = city.get
-    if (state != None)
+    if (state.isDefined)
       trans.state = state.get
-    if (debit != None)
+    if (debit.isDefined)
       trans.debit = debit.get
-    if (credit != None)
+    if (credit.isDefined)
       trans.credit = credit.get
-    if (trantype != None)
+    if (trantype.isDefined)
       trans.trantype = trantype.get
     trans
   }
 }
 
 @Entity
+@NamedQueries(Array(
+  new NamedQuery(name="byMonth",
+    query="select sum(s.credit) as credit, " +
+      "sum(s.debit) as debit, " +
+      "cast(extract(month from s.trandate) as text) as period, " +
+      " 'N' as periodType " +
+      "from Transactions s " +
+      "where extract(year from s.trandate) = :year and " +
+      "s.userid = :userid " +
+      "group by cast(extract(month from s.trandate) as text) " +
+      "order by cast(extract(month from s.trandate) as text)"),
+  new NamedQuery(name="byQuarter",
+    query="select sum(s.credit) as credit, " +
+      "sum(s.debit) as debit, " +
+      "cast(extract(quarter from s.trandate) as text) as period, " +
+      " 'N' as periodType " +
+      "from Transactions s " +
+      "where extract(year from s.trandate) = :year and " +
+      "s.userid = :userid " +
+      "group by cast(extract(quarter from s.trandate) as text) " +
+      "order by cast(extract(quarter from s.trandate) as text)")
+)
+)
 class Transactions {
   @Id
   var id: Long = 0l

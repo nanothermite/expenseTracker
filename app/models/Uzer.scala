@@ -9,6 +9,7 @@ import com.avaje.ebean.RawSql
 import common.Dao
 import play.data.validation.Constraints
 
+import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 /**
@@ -63,12 +64,22 @@ class Uzer {
 }
 
 object Uzer extends Dao(classOf[Uzer]) {
-  def all(): List[Uzer] = Uzer.find.findList().asScala.toList
+  def all(): List[Uzer] = Uzer.find().findList().asScala.toList
 
-  def allq(sql: RawSql): List[Uzer] = {
-    val q = find()
+  def allq(sql: RawSql, pList:Option[java.util.HashMap[String, AnyRef]]): List[Uzer] = {
+    var users: List[Uzer] = List.empty[Uzer]
+    val q = Uzer.find()
+    if (pList.isDefined)
+      for ((k:String,v:Object) <- pList.get) {
+        q.setParameter(k, v)
+      }
     q.setRawSql(sql)
-    q.findList().asScala.toList
+    try {
+      users = q.findList().asScala.toList
+      users
+    } catch {
+      case e: Exception => users
+    }
   }
 
   def create(username: String, password: String, role: String, nodata: String,
@@ -102,12 +113,12 @@ object Uzer extends Dao(classOf[Uzer]) {
     uz.username = username
     uz.password = password
     uz.role = role
-    if (nodata != None)
+    if (nodata.isDefined)
       uz.nodata = nodata.get
     uz.joined_date = joined_Date
-    if (activation != None)
+    if (activation.isDefined)
       uz.activation = activation.get
-    if (active_timestamp != None)
+    if (active_timestamp.isDefined)
       uz.active_timestamp = active_timestamp.get
     uz.active = active
     uz
@@ -116,21 +127,21 @@ object Uzer extends Dao(classOf[Uzer]) {
   def apply2(username: Option[String], password: Option[String], role: Option[String], nodata: Option[String],
             joined_Date: Option[Date], activation: Option[String], active_timestamp: Option[Date], active: Option[String]): Uzer = {
     val uz = new Uzer
-    if (username != None)
+    if (username.isDefined)
       uz.username = username.get
-    if (password != None)
+    if (password.isDefined)
       uz.password = password.get
-    if (role != None)
+    if (role.isDefined)
       uz.role = role.get
-    if (nodata != None)
+    if (nodata.isDefined)
       uz.nodata = nodata.get
-    if (joined_Date != None)
+    if (joined_Date.isDefined)
       uz.joined_date = joined_Date.get
-    if (activation != None)
+    if (activation.isDefined)
       uz.activation = activation.get
-    if (active_timestamp != None)
+    if (active_timestamp.isDefined)
       uz.active_timestamp = active_timestamp.get
-    if (active != None)
+    if (active.isDefined)
       uz.active = active.get
     uz
   }

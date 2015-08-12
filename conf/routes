@@ -11,6 +11,8 @@ GET           /byEmail/:email                       controllers.Application.byEm
 GET           /byUsername/:username                 controllers.Application.byUsername(username: String)
 GET           /getYears/:uid                        controllers.Application.byYears(uid: Integer)
 
+GET           /validUser/:userid/:pwd               controllers.Application.validateUser(userid: String, pwd: String)
+
 # create objects
 POST          /addUser                              controllers.Application.addUser
 POST          /addMember/:userid                    controllers.Application.addMember(userid: Long)

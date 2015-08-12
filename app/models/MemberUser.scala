@@ -59,6 +59,8 @@ class MemberUser {
   @Pattern(regexp = "[A-Za-z0-9]*", message = "must contain only letters, digits")
   var userid: String = null
 
+  var password: String = null
+
   var uid: Long = 0l
 }
 
@@ -67,17 +69,17 @@ object MemberUser extends Dao(classOf[MemberUser]){
    *
    * @return
    */
-  def all() : List[MemberUser] = MemberUser.find.findList().asScala.toList
+  def all() : List[MemberUser] = MemberUser.find().findList().asScala.toList
 
   /**
    *
-   * @param sql
-   * @param pList
+   * @param sql query
+   * @param pList params
    * @return
    */
   def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[MemberUser] = {
     val q = MemberUser.find()
-    if (!pList.isEmpty)
+    if (pList.isDefined)
       for ((k:String,v:Object) <- pList.get) {
         q.setParameter(k, v)
       }
@@ -90,26 +92,26 @@ object MemberUser extends Dao(classOf[MemberUser]){
 
   /**
    *
-   * @param id
-   * @param email
-   * @param fname
-   * @param lname
-   * @param phone_number
-   * @param `type`
-   * @param street1
-   * @param street2
-   * @param city
-   * @param state
-   * @param country
-   * @param joined_date
-   * @param ip
-   * @param zip
-   * @param userid
-   * @param uid
+   * @param id id
+   * @param email email
+   * @param fname first name
+   * @param lname last name
+   * @param phone_number tel
+   * @param `type` my type
+   * @param street1 address
+   * @param street2 address
+   * @param city city
+   * @param state st
+   * @param country country
+   * @param joined_date date
+   * @param ip x.x.x.x
+   * @param zip  99999
+   * @param userid name
+   * @param uid number
    */
   def create(id: Long, email: String, fname: String, lname: String, phone_number: String, `type`: String,
              street1: String, street2: String, city: String, state: String, country: String, joined_date: Date,
-             ip: String, zip: String, userid: String, uid: Long): Unit = {
+             ip: String, zip: String, userid: String, uid: Long, password: String): Unit = {
     var mu = new MemberUser
     mu.id = id
     mu.email = email
@@ -127,7 +129,12 @@ object MemberUser extends Dao(classOf[MemberUser]){
     mu.zip = zip
     mu.userid = userid
     mu.uid = uid
+    mu.password = password
     save(mu)
   }
+
+  def getColOrder: List[String] = List("id", "email", "fname", "lname", "phone_number", "type",
+    "street1", "street2", "city", "state", "country", "joined_date", "ip", "zip", "userid", "uid", "password")
+
 }
 
