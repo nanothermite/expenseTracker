@@ -311,7 +311,7 @@ object Application extends Controller with myTypes with Sha256 {
     pList += "username" -> name
 
     val pwdList = getList("allq", validatesql, colMap, pList, MemberUser)
-    val pwdHash = if (pwdList.headOption != None) pwdList.head.asInstanceOf[MemberUser].password else ""
+    val pwdHash = if (pwdList.nonEmpty) pwdList.head.asInstanceOf[MemberUser].password else ""
     val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
     val jsRet = Json.jString(if (valid) "auth" else "denied")
     Ok(Json.obj("access"->jsRet).nospaces)
