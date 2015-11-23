@@ -1,3 +1,3 @@
 #!/bin/bash
 
-DATABASE_URL=jdbc:postgresql://berne/finance_dev DATABASE_USER=biz DATABASE_PWD=xxxx activator -jvm-debug 9998
+CACHEDHOST=berne:11211 DATABASE_URL=jdbc:postgresql://berne/finance_dev DATABASE_USER=biz DATABASE_PWD=xxxx activator -jvm-debug 9999

@@ -12,7 +12,12 @@ import scala.collection.JavaConverters._
 /**
  * Created by hkatz on 9/5/14.
  */
-object Transactions extends Dao(classOf[Transactions]){
+
+object Transactions extends Dao(classOf[Transactions]) {
+  val byMonth = "byMonth"
+  val byQuarter = "byQuarter"
+  val year = "year"
+
   def all() : List[Transactions] = Transactions.find().findList().asScala.toList
 
   def allq(sql:RawSql) : List[Transactions] = {
@@ -113,29 +118,6 @@ object Transactions extends Dao(classOf[Transactions]){
 }
 
 @Entity
-@NamedQueries(Array(
-  new NamedQuery(name="byMonth",
-    query="select sum(s.credit) as credit, " +
-      "sum(s.debit) as debit, " +
-      "cast(extract(month from s.trandate) as text) as period, " +
-      " 'N' as periodType " +
-      "from Transactions s " +
-      "where extract(year from s.trandate) = :year and " +
-      "s.userid = :userid " +
-      "group by cast(extract(month from s.trandate) as text) " +
-      "order by cast(extract(month from s.trandate) as text)"),
-  new NamedQuery(name="byQuarter",
-    query="select sum(s.credit) as credit, " +
-      "sum(s.debit) as debit, " +
-      "cast(extract(quarter from s.trandate) as text) as period, " +
-      " 'N' as periodType " +
-      "from Transactions s " +
-      "where extract(year from s.trandate) = :year and " +
-      "s.userid = :userid " +
-      "group by cast(extract(quarter from s.trandate) as text) " +
-      "order by cast(extract(quarter from s.trandate) as text)")
-)
-)
 class Transactions {
   @Id
   var id: Long = 0l
