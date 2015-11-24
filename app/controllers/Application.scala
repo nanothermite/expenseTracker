@@ -207,7 +207,7 @@ object Application extends Controller with myTypes with Sha256 {
 
     val aggList = getList("allq", byMonthsql, colMap, pList, Aggregates)
     val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]) //, m)
-    Ok(result.nospaces)
+    Ok(result)
   }
 
   /**
@@ -219,27 +219,29 @@ object Application extends Controller with myTypes with Sha256 {
   def byCategory(year: Integer, uid: Integer) = Action.async {
     val key = s"cat-$year-$uid"
     getSeq(key).map {
-      case Some(i: String) =>
-        Ok(if (i != None) i else {
-          colOrder = Seq("credit", "debit", "period", "periodType")
+      case None =>
+        colOrder = Seq("credit", "debit", "period", "periodType")
 
-          colMap = collection.mutable.Map("sum(u.credit)" -> "credit",
-            "sum(u.debit)" -> "debit",
-            "u.trantype" -> "period",
-            "'S'" -> "periodType")
+        colMap = collection.mutable.Map("sum(u.credit)" -> "credit",
+          "sum(u.debit)" -> "debit",
+          "u.trantype" -> "period",
+          "'S'" -> "periodType")
 
-          pList.clear()
-          pList += "year" -> year
-          pList += "userid" -> uid
+        pList.clear()
+        pList += "year" -> year
+        pList += "userid" -> uid
 
-          val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates)
+        val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates)
+        val json: Json =
           if (aggList.nonEmpty) {
-            val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]).nospaces
-            setSeq(key, result)
+            val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]])
+            setSeq(key, result.nospaces)
             result
-          } else """{none}"""
-        })
-      case t: AnyRef => Ok("broke")
+          } else
+            Json.obj("result" -> jString("none"))
+        Ok(json)
+      case Some(i: String) => Ok(i)
+      case t: Any => Ok("broke")
     }
   }
 
@@ -252,26 +254,28 @@ object Application extends Controller with myTypes with Sha256 {
   def byQuarter(year: Integer, uid: Integer) = Action.async {
     val key = s"qrt-$year-$uid"
     getSeq(key).map {
-      case Some(i:String) =>
-        Ok(if (i != None) i else {
-          colOrder = Seq("credit","debit","period","periodType")
+      case None =>
+        colOrder = Seq("credit", "debit", "period", "periodType")
 
-          colMap = collection.mutable.Map("sum(s.credit)" -> "credit",
-            "sum(s.debit)" -> "debit",
-            "cast(extract(quarter from s.trandate) as text)" -> "period",
-            "'N'" -> "periodType")
+        colMap = collection.mutable.Map("sum(s.credit)" -> "credit",
+          "sum(s.debit)" -> "debit",
+          "cast(extract(quarter from s.trandate) as text)" -> "period",
+          "'N'" -> "periodType")
 
-          pList.clear()
-          pList += "year" -> year
-          pList += "userid" -> uid
+        pList.clear()
+        pList += "year" -> year
+        pList += "userid" -> uid
 
-          val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates)
+        val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates)
+        val retJson: Json =
           if (aggList.nonEmpty) {
-            val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]).nospaces
-            setSeq(key, result)
+            val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]])
+            setSeq(key, result.nospaces)
             result
-          } else """{none}"""
-        })
+          } else
+            Json.obj("result" -> jString("none"))
+        Ok(retJson)
+      case Some(i: String) => Ok(i)
       case t: AnyRef => Ok("broke")
     }
   }
@@ -300,7 +304,7 @@ object Application extends Controller with myTypes with Sha256 {
 
     val aggList = getList("allq", byEmailsql, colMap, pList, EmailUser)
     val result = genJson(colOrder.toArray, aggList.asInstanceOf[List[EmailUser]]) //, m)
-    Ok(result.nospaces)
+    Ok(result)
   }
 
   def validateUser(name: String, passwd: String) = Action {
