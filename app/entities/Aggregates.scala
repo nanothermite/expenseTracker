@@ -1,10 +1,16 @@
-package models
+package entities
 
 import javax.persistence._
 
 import com.avaje.ebean.RawSql
 import com.avaje.ebean.annotation.Sql
 import common.Dao
+
+import argonaut.Argonaut._
+import argonaut._
+import utils.JSONConvertible
+
+import models._
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -14,11 +20,20 @@ import scala.collection.JavaConverters._
  */
 @Entity
 @Sql
-class Aggregates {
+class Aggregates extends JSONConvertible {
   var credit: java.lang.Double = null
   var debit: java.lang.Double = null
   var period:String = null
   var periodType:String = null
+
+  override def toJSON: Json =
+    Json(
+      "credit" -> (if (credit == null) jNull else jNumber(credit)),
+      "debit" -> (if (debit == null) jNull else jNumber(debit)),
+      "period" -> (if (period == null) jNull else jString(period)),
+      "period_type" -> (if (periodType == null) jNull else jString(periodType))
+    )
+
 }
 
 object Aggregates extends Dao(classOf[Aggregates]){
@@ -48,11 +63,14 @@ object Aggregates extends Dao(classOf[Aggregates]){
   }
 
   def create(credit:Double,debit:Double,period:String,periodType:String): Unit = {
-    var agg = new Aggregates
+    val agg = new Aggregates
     agg.credit = credit
     agg.debit = debit
     agg.period = period
     agg.periodType = periodType
     save(agg)
   }
+
+  def toAggregate(agg: Aggregates): Aggregate =
+    Aggregate(agg.debit, agg.credit, agg.period, agg.periodType)
 }

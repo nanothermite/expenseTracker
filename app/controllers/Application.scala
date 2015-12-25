@@ -7,7 +7,7 @@ import _root_.common.{Shared, myTypes}
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean._
-import models._
+import entities._
 import play.api.http.{ContentTypeOf, ContentTypes, Writeable}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, JsValue, Reads}
@@ -17,6 +17,7 @@ import utils.Sha256
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.parallel.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -205,9 +206,8 @@ object Application extends Controller with myTypes with Sha256 {
     pList += "year" -> year
     pList += "userid" -> uid
 
-    val aggList = getList("allq", byMonthsql, colMap, pList, Aggregates)
-    val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]]) //, m)
-    Ok(result)
+    val entList: List[Aggregates] = getList("allq", byMonthsql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
+    Ok(jArray(entList.map(_.toJSON)))
   }
 
   /**
@@ -231,16 +231,18 @@ object Application extends Controller with myTypes with Sha256 {
         pList += "year" -> year
         pList += "userid" -> uid
 
-        val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates)
+        val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
         val json: Json =
           if (aggList.nonEmpty) {
-            val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]])
+            val result = jArray(aggList.map(_.toJSON))
             setSeq(key, result.nospaces)
             result
           } else
             Json.obj("result" -> jString("none"))
         Ok(json)
-      case Some(i: String) => Ok(i)
+      case Some(i: String) =>
+        val iJson = Parse.parseOption(i)
+        Ok(if (iJson.nonEmpty)iJson.get else jNull)
       case t: Any => Ok("broke")
     }
   }
@@ -266,16 +268,19 @@ object Application extends Controller with myTypes with Sha256 {
         pList += "year" -> year
         pList += "userid" -> uid
 
-        val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates)
+        val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
         val retJson: Json =
           if (aggList.nonEmpty) {
-            val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]])
+            val result = jArray(aggList.map(_.toJSON))
+            //val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]])
             setSeq(key, result.nospaces)
             result
           } else
             Json.obj("result" -> jString("none"))
         Ok(retJson)
-      case Some(i: String) => Ok(i)
+      case Some(i: String) =>
+        val iJson = Parse.parseOption(i)
+        Ok(if (iJson.nonEmpty)iJson.get else jNull)
       case t: AnyRef => Ok("broke")
     }
   }

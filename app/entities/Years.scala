@@ -1,4 +1,4 @@
-package models
+package entities
 
 import java.util.Date
 import javax.persistence._

@@ -1,9 +1,10 @@
-package models
+package entities
 
 import java.util
-import java.util.Date
 import javax.persistence._
 
+import argonaut.Argonaut._
+import argonaut._
 import com.avaje.ebean.RawSql
 import common.Dao
 
@@ -53,6 +54,17 @@ class Contact {
       s = f"$id%d - $bizname"
     s
   }
+
+  def toJSON: Json = Json(
+    "id" -> jNumber(id),
+    "version" -> jString(version.toString),
+    "bizname" -> jString(bizname),
+    "industry" -> jString(industry),
+    "phone" -> jString(phone),
+    "city" -> jString(city),
+    "state" -> jString(state),
+    "identifier" -> jString(identifier)
+  )
 }
 
 object Contact extends Dao(classOf[Contact]) {
