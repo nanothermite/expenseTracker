@@ -10,7 +10,7 @@ import com.avaje.ebean.RawSql
 import common.Dao
 import org.joda.time.DateTime
 import play.data.validation.Constraints
-import utils.DateFormatter
+import utils.{JSONConvertible, DateFormatter}
 
 import scala.collection.JavaConverters._
 
@@ -123,7 +123,7 @@ object Transactions extends Dao(classOf[Transactions]) {
 }
 
 @Entity
-class Transactions {
+class Transactions extends JSONConvertible {
   @Id
   var id: Long = 0l
 
@@ -168,14 +168,14 @@ class Transactions {
   def toJSON: Json = Json(
     "id" -> jNumber(id),
     "trandate" -> jString(DateFormatter.formatDate(new DateTime(trandate))),
-    "acct" -> jString(acct),
-    "vendor" -> jString(vendor),
-    "description" -> jString(description),
-    "phone" -> jString(phone),
-    "city" -> jString(city),
-    "state" -> jString(state),
-    "debit" -> jNumber(debit),
-    "credit" -> jNumber(credit),
-    "trantype" -> jString(trantype)
+    "acct" -> jsonNullCheck(acct),
+    "vendor" -> jsonNullCheck(vendor),
+    "description" -> jsonNullCheck(description),
+    "phone" -> jsonNullCheck(phone),
+    "city" -> jsonNullCheck(city),
+    "state" -> jsonNullCheck(state),
+    "debit" -> jsonNullCheck(debit),
+    "credit" -> jsonNullCheck(credit),
+    "trantype" -> jsonNullCheck(trantype)
   )
 }

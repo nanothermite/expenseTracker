@@ -5,9 +5,13 @@ import java.util.Date
 import javax.persistence._
 import javax.validation.constraints.{NotNull, Pattern}
 
+import argonaut.Argonaut._
+import argonaut._
 import com.avaje.ebean.RawSql
 import common.Dao
+import org.joda.time.DateTime
 import play.data.validation.Constraints
+import utils.{DateFormatter,JSONConvertible}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -17,7 +21,7 @@ import scala.collection.JavaConverters._
  */
 @Entity
 @Table(name = "uzer")
-class Uzer {
+class Uzer extends JSONConvertible {
   @Id
   var id: Long = 0l
 
@@ -61,6 +65,19 @@ class Uzer {
       s = f"$id%d - $username"
     s
   }
+
+  override def toJSON: Json =
+  Json(
+    "id" -> jNumber(id),
+    "username" -> jString(username),
+    "password" -> jString(password),
+    "role" -> jString(role),
+    "nodata" -> jsonNullCheck(nodata),
+    "joined_date" -> jString(DateFormatter.formatDate(new DateTime(joined_date))),
+    "activation" -> jsonNullCheck(activation),
+    "active_timestamp" -> jsonNullCheck(DateFormatter.formatDate(new DateTime(active_timestamp))),
+    "active" -> jsonNullCheck(active)
+  )
 }
 
 object Uzer extends Dao(classOf[Uzer]) {

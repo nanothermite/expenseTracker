@@ -2,6 +2,8 @@ package entities
 
 import java.util.Date
 
+import argonaut.Argonaut._
+import argonaut._
 import com.avaje.ebean.RawSql
 import common.Dao
 import javax.persistence._
@@ -9,6 +11,9 @@ import javax.validation.constraints.Digits
 import javax.validation.constraints.NotNull
 import javax.validation.constraints.Pattern
 import javax.validation.constraints.Size
+import org.joda.time.DateTime
+import utils.{DateFormatter,JSONConvertible}
+
 import scala.collection.JavaConverters._
 
 /**
@@ -131,7 +136,7 @@ object Member extends Dao(classOf[Member]) {
 
 @Entity
 @Table(name = "member")
-class Member {
+class Member extends JSONConvertible {
   @Id
   var id: Long = 0l
 
@@ -186,4 +191,22 @@ class Member {
       s = f"$id%d - $email"
     s
   }
+
+  override def toJSON: Json =
+    Json(
+      "id" -> jNumber(id),
+      "email" -> jString(email),
+      "fname" -> jString(fname),
+      "lname" -> jString(lname),
+      "userid" -> jsonNullCheck(userid),
+      "type" -> jString(`type`),
+      "street1" -> jsonNullCheck(street1),
+      "street2" -> jsonNullCheck(street2),
+      "city" -> jsonNullCheck(city),
+      "state" -> jsonNullCheck(state),
+      "zip" -> jsonNullCheck(zip),
+      "phone_number" -> jsonNullCheck(phone_number),
+      "country" -> jsonNullCheck(country),
+      "joined_date" -> jsonNullCheck(DateFormatter.formatDate(new DateTime(joined_date)))
+    )
 }

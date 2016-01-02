@@ -7,6 +7,7 @@ import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean.RawSql
 import common.Dao
+import utils.JSONConvertible
 
 import scala.collection.JavaConverters._
 
@@ -15,7 +16,7 @@ import scala.collection.JavaConverters._
  */
 @Entity
 @Table (name = "contact")
-class Contact {
+class Contact extends JSONConvertible {
   @Id
   var id:Long = 0l
 
@@ -59,11 +60,11 @@ class Contact {
     "id" -> jNumber(id),
     "version" -> jString(version.toString),
     "bizname" -> jString(bizname),
-    "industry" -> jString(industry),
-    "phone" -> jString(phone),
-    "city" -> jString(city),
-    "state" -> jString(state),
-    "identifier" -> jString(identifier)
+    "industry" -> jsonNullCheck(industry),
+    "phone" -> jsonNullCheck(phone),
+    "city" -> jsonNullCheck(city),
+    "state" -> jsonNullCheck(state),
+    "identifier" -> jsonNullCheck(identifier)
   )
 }
 

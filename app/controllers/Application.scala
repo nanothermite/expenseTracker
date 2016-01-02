@@ -604,6 +604,66 @@ object Application extends Controller with myTypes with Sha256 {
   }
 
   /**
+   * from crud operations - get User entity
+   * @param id
+   * @return
+   */
+  def getUser(id: Long) = Action {
+    val uzer = Uzer.find(id)
+    val jSon =
+      if (uzer != None)
+        uzer.get.toJSON
+      else
+        Json("badkey" -> jNumber(id))
+    Ok(jSon)
+  }
+
+  /**
+   * from crud operations - get Contact entity
+   * @param id
+   * @return
+   */
+  def getContact(id: Long) = Action {
+    val contact = Contact.find(id)
+    val jSon =
+      if (contact != None)
+        contact.get.toJSON
+      else
+        Json("badkey" -> jNumber(id))
+    Ok(jSon)
+  }
+
+  /**
+   * from crud operations - get Member entity
+   * @param id
+   * @return
+   */
+  def getMember(id: Long) = Action {
+    val member = Member.find(id)
+    val jSon =
+      if (member != None)
+        member.get.toJSON
+      else
+        Json("badkey" -> jNumber(id))
+    Ok(jSon)
+  }
+
+  /**
+   * from crud operations - get Transactions entity
+   * @param id
+   * @return
+   */
+  def getTransactions(id: Long) = Action {
+    val transactions = Transactions.find(id)
+    val jSon =
+      if (transactions != None)
+        transactions.get.toJSON
+      else
+        Json("badkey" -> jNumber(id))
+    Ok(jSon)
+  }
+
+  /**
    * user is all nullable for updates
    */
   val uzerUpdateReads : Reads[Uzer] = (

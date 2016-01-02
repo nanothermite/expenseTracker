@@ -22,4 +22,10 @@ trait JSONConvertible {
   }
 
   def asJSON(elts: Iterable[JSONConvertible]) = elts.map(_.toJSON)
+
+  def jsonNullCheck(obj: String): Json =
+    if (obj != null) jString(obj) else jNull
+
+  def jsonNullCheck(obj: Double): Json =
+    if (obj != null) jNumber(obj) else jNull
 }

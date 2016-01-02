@@ -19,6 +19,12 @@ POST          /addMember/:userid                    controllers.Application.addM
 POST          /addContact/:userid                   controllers.Application.addContact(userid: Long)
 POST          /addXaction/:userid/:contactid        controllers.Application.addTransaction(userid: Long, contactid: Long)
 
+# find entities
+GET           /getUser/:id                          controllers.Application.getUser(id: Long)
+GET           /getContact/:id                       controllers.Application.getContact(id: Long)
+GET           /getMember/:id                        controllers.Application.getMember(id: Long)
+GET           /getXaction/:id                       controllers.Application.getTransactions(id: Long)
+
 # update existing objects
 POST          /updateUser/:userid                   controllers.Application.updateUser(userid: Long)
 POST          /updateMember/:memberid               controllers.Application.updateMember(memberid: Long)
