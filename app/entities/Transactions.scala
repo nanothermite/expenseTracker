@@ -152,9 +152,9 @@ class Transactions extends JSONConvertible {
 
   var state: String = null
 
-  var debit: Double = 0d
+  var debit: java.lang.Double = 0d
 
-  var credit: Double = 0d
+  var credit: java.lang.Double = 0d
 
   var trantype: String = null
 
