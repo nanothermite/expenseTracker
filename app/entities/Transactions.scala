@@ -7,10 +7,10 @@ import argonaut.Argonaut._
 import argonaut._
 
 import com.avaje.ebean.RawSql
-import common.Dao
+import common.{BaseObject, Dao}
 import org.joda.time.DateTime
 import play.data.validation.Constraints
-import utils.{JSONConvertible, DateFormatter}
+import utils.DateFormatter
 
 import scala.collection.JavaConverters._
 
@@ -23,10 +23,10 @@ object Transactions extends Dao(classOf[Transactions]) {
   val byQuarter = "byQuarter"
   val year = "year"
 
-  def all() : List[Transactions] = Transactions.find().findList().asScala.toList
+  def all() : List[Transactions] = Transactions.find.findList().asScala.toList
 
   def allq(sql:RawSql) : List[Transactions] = {
-    val q = find()
+    val q = find
     q.setRawSql(sql)
     q.findList().asScala.toList
   }
@@ -123,7 +123,7 @@ object Transactions extends Dao(classOf[Transactions]) {
 }
 
 @Entity
-class Transactions extends JSONConvertible {
+class Transactions extends BaseObject {
   @Id
   var id: Long = 0l
 

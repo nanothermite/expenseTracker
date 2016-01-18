@@ -69,7 +69,7 @@ object MemberUser extends Dao(classOf[MemberUser]){
    *
    * @return
    */
-  def all() : List[MemberUser] = MemberUser.find().findList().asScala.toList
+  def all(): List[MemberUser] = MemberUser.find.findList().asScala.toList
 
   /**
    *
@@ -78,7 +78,7 @@ object MemberUser extends Dao(classOf[MemberUser]){
    * @return
    */
   def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[MemberUser] = {
-    val q = MemberUser.find()
+    val q = MemberUser.find
     if (pList.isDefined)
       for ((k:String,v:Object) <- pList.get) {
         q.setParameter(k, v)

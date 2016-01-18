@@ -6,8 +6,7 @@ import javax.persistence._
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean.RawSql
-import common.Dao
-import utils.JSONConvertible
+import common.{BaseObject, Dao}
 
 import scala.collection.JavaConverters._
 
@@ -16,7 +15,7 @@ import scala.collection.JavaConverters._
  */
 @Entity
 @Table (name = "contact")
-class Contact extends JSONConvertible {
+class Contact extends BaseObject {
   @Id
   var id:Long = 0l
 
@@ -72,7 +71,7 @@ object Contact extends Dao(classOf[Contact]) {
   def all() : List[Contact] = Contact.find.findList().asScala.toList
 
   def allq(sql:RawSql) : List[Contact] = {
-    val q = find()
+    val q = find
     q.setRawSql(sql)
     q.findList().asScala.toList
   }

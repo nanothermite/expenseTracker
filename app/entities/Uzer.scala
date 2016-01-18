@@ -8,10 +8,10 @@ import javax.validation.constraints.{NotNull, Pattern}
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean.RawSql
-import common.Dao
+import common.{BaseObject, Dao}
 import org.joda.time.DateTime
 import play.data.validation.Constraints
-import utils.{DateFormatter,JSONConvertible}
+import utils.DateFormatter
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -21,7 +21,7 @@ import scala.collection.JavaConverters._
  */
 @Entity
 @Table(name = "uzer")
-class Uzer extends JSONConvertible {
+class Uzer extends BaseObject {
   @Id
   var id: Long = 0l
 
@@ -81,11 +81,11 @@ class Uzer extends JSONConvertible {
 }
 
 object Uzer extends Dao(classOf[Uzer]) {
-  def all(): List[Uzer] = Uzer.find().findList().asScala.toList
+  def all(): List[Uzer] = Uzer.find.findList().asScala.toList
 
   def allq(sql: RawSql, pList:Option[java.util.HashMap[String, AnyRef]]): List[Uzer] = {
     var users: List[Uzer] = List.empty[Uzer]
-    val q = Uzer.find()
+    val q = Uzer.find
     if (pList.isDefined)
       for ((k:String,v:Object) <- pList.get) {
         q.setParameter(k, v)

@@ -2,14 +2,11 @@ package entities
 
 import javax.persistence._
 
-import com.avaje.ebean.RawSql
-import com.avaje.ebean.annotation.Sql
-import common.Dao
-
 import argonaut.Argonaut._
 import argonaut._
-import utils.JSONConvertible
-
+import com.avaje.ebean.RawSql
+import com.avaje.ebean.annotation.Sql
+import common.{BaseObject, Dao}
 import models._
 
 import scala.collection.JavaConversions._
@@ -20,7 +17,7 @@ import scala.collection.JavaConverters._
  */
 @Entity
 @Sql
-class Aggregates extends JSONConvertible {
+class Aggregates extends BaseObject {
   var credit: java.lang.Double = null
   var debit: java.lang.Double = null
   var period:String = null
@@ -50,7 +47,7 @@ object Aggregates extends Dao(classOf[Aggregates]){
    * @return
    */
   def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[Aggregates] = {
-    val q = Aggregates.find()
+    val q = Aggregates.find
     if (pList.isDefined)
         for ((k:String,v:Object) <- pList.get) {
           q.setParameter(k, v)

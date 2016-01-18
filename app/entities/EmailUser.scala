@@ -4,10 +4,14 @@ import java.util.Date
 import javax.persistence._
 import javax.validation.constraints.{NotNull, Pattern}
 
+import argonaut.Argonaut._
+import argonaut._
 import com.avaje.ebean.RawSql
 import com.avaje.ebean.annotation.Sql
-import common.Dao
+import common.{BaseObject, Dao}
+import org.joda.time.DateTime
 import play.data.validation.Constraints
+import utils.DateFormatter
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -17,7 +21,7 @@ import scala.collection.JavaConverters._
  */
 @Entity
 @Sql
-class EmailUser {
+class EmailUser extends BaseObject {
   var id: Long = 0l
 
   @Pattern(regexp = "[A-Za-z0-9 ]*", message = "must contain only letters, digits and spaces")
@@ -44,6 +48,18 @@ class EmailUser {
   var active_timestamp: Date = null
 
   var active: String = null
+
+  override def toJSON: Json =
+    Json(
+      "id" -> jNumber(id),
+      "username" -> jString(username),
+      "password" -> jString(password),
+      "role" -> jString(role),
+      "joined_date" -> jString(DateFormatter.formatDate(new DateTime(joined_date))),
+      "activation" -> jsonNullCheck(activation),
+      "active_timestamp" -> jsonNullCheck(DateFormatter.formatDate(new DateTime(active_timestamp))),
+      "active" -> jString(active)
+  )
 }
 
 object EmailUser extends Dao(classOf[EmailUser]){
@@ -55,12 +71,12 @@ object EmailUser extends Dao(classOf[EmailUser]){
 
   /**
    *
-   * @param sql
-   * @param pList
+   * @param sql query
+   * @param pList params
    * @return
    */
   def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[EmailUser] = {
-    val q = EmailUser.find()
+    val q = EmailUser.find
     if (!pList.isEmpty)
       for ((k:String,v:Object) <- pList.get) {
         q.setParameter(k, v)
@@ -74,19 +90,19 @@ object EmailUser extends Dao(classOf[EmailUser]){
 
   /**
    *
-   * @param id
-   * @param username
-   * @param password
-   * @param role
-   * @param nodata
-   * @param joined_date
-   * @param activation
-   * @param active_timestamp
-   * @param active
+   * @param id synth #
+   * @param username user supplied
+   * @param password pwd
+   * @param role test or active
+   * @param nodata  Y/N
+   * @param joined_date date responded
+   * @param activation  hex key
+   * @param active_timestamp  date stamp
+   * @param active  Y/N
    */
   def create(id: Long, username: String, password: String, role: String, nodata: String, joined_date: Date,
              activation: String, active_timestamp: Date, active: String): Unit = {
-    var eu = new EmailUser
+    val eu = new EmailUser
     eu.id = id
     eu.username = username
     eu.password = password

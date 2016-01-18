@@ -5,14 +5,14 @@ import java.util.Date
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean.RawSql
-import common.Dao
+import common.{BaseObject, Dao}
 import javax.persistence._
 import javax.validation.constraints.Digits
 import javax.validation.constraints.NotNull
 import javax.validation.constraints.Pattern
 import javax.validation.constraints.Size
 import org.joda.time.DateTime
-import utils.{DateFormatter,JSONConvertible}
+import utils.DateFormatter
 
 import scala.collection.JavaConverters._
 
@@ -23,7 +23,7 @@ object Member extends Dao(classOf[Member]) {
   def all() : List[Member] = Member.find.findList().asScala.toList
 
   def allq(sql:RawSql) : List[Member] = {
-    val q = find()
+    val q = find
     q.setRawSql(sql)
     q.findList().asScala.toList
   }
@@ -78,22 +78,22 @@ object Member extends Dao(classOf[Member]) {
     member.email = email
     member.fname = fname
     member.lname = lname
-    if (phone_number != None)
+    if (phone_number.isDefined)
       member.phone_number = phone_number.get
     member.`type` = `type`
-    if (street1 != None)
+    if (street1.isDefined)
       member.street1 = street1.get
-    if (street2 != None)
+    if (street2.isDefined)
       member.street2 = street2.get
-    if (city != None)
+    if (city.isDefined)
       member.city = city.get
-    if (state != None)
+    if (state.isDefined)
       member.state = state.get
     member.country = country
     member.joined_date =joined_date
     member.ip = ip
     member.zip = zip
-    if (userid != None)
+    if (userid.isDefined)
       member.userid = userid.get
     member
   }
@@ -102,33 +102,33 @@ object Member extends Dao(classOf[Member]) {
             street1: Option[String],street2: Option[String],city: Option[String],state: Option[String],country: Option[String],joined_date: Option[Date],
             ip: Option[String],zip: Option[String],userid: Option[String]): Member = {
     val member = new Member
-    if (email != None)
+    if (email.isDefined)
       member.email = email.get
-    if (fname != None)
+    if (fname.isDefined)
       member.fname = fname.get
-    if (lname != None)
+    if (lname.isDefined)
       member.lname = lname.get
-    if (phone_number != None)
+    if (phone_number.isDefined)
       member.phone_number = phone_number.get
-    if (`type` != None)
+    if (`type`.isDefined)
       member.`type` = `type`.get
-    if (street1 != None)
+    if (street1.isDefined)
       member.street1 = street1.get
-    if (street2 != None)
+    if (street2.isDefined)
       member.street2 = street2.get
-    if (city != None)
+    if (city.isDefined)
       member.city = city.get
-    if (state != None)
+    if (state.isDefined)
       member.state = state.get
-    if (country != None)
+    if (country.isDefined)
       member.country = country.get
-    if (joined_date != None)
+    if (joined_date.isDefined)
       member.joined_date =joined_date.get
-    if (ip != None)
+    if (ip.isDefined)
       member.ip = ip.get
-    if (zip != None)
+    if (zip.isDefined)
       member.zip = zip.get
-    if (userid != None)
+    if (userid.isDefined)
       member.userid = userid.get
     member
   }
@@ -136,7 +136,7 @@ object Member extends Dao(classOf[Member]) {
 
 @Entity
 @Table(name = "member")
-class Member extends JSONConvertible {
+class Member extends BaseObject {
   @Id
   var id: Long = 0l
 

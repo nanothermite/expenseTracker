@@ -29,7 +29,7 @@ object Years extends Dao(classOf[Years]){
    * @return
    */
   def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[Years] = {
-    val q = Years.find()
+    val q = Years.find
     if (!pList.isEmpty)
       for ((k:String,v:Object) <- pList.get) {
         q.setParameter(k, v)

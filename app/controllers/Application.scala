@@ -3,7 +3,7 @@ package controllers
 import java.nio.charset.Charset
 import java.util.Date
 
-import _root_.common.{Shared, myTypes}
+import _root_.common.{BaseObject, Shared, myTypes}
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean._
@@ -17,7 +17,6 @@ import utils.Sha256
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.collection.parallel.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -193,21 +192,36 @@ object Application extends Controller with myTypes with Sha256 {
    * @param uid user
    * @return
    */
-  def byMonth(year: Integer, uid: Integer) = Action {
-    colOrder = Seq("credit","debit","period","periodType")
+  def byMonth(year: Integer, uid: Integer) = Action.async {
+    val key = s"mon-$year-$uid"
+    getSeq(key).map {
+      case None =>
+        colOrder = Seq("credit","debit","period","periodType")
 
-    colMap.clear()
-    colMap += "sum(s.credit)" -> "credit"
-    colMap += "sum(s.debit)" -> "debit"
-    colMap += "cast(extract(month from s.trandate) as text)" -> "period"
-    colMap += "'N'" -> "periodType"
+        colMap.clear()
+        colMap += "sum(s.credit)" -> "credit"
+        colMap += "sum(s.debit)" -> "debit"
+        colMap += "cast(extract(month from s.trandate) as text)" -> "period"
+        colMap += "'N'" -> "periodType"
 
-    pList.clear()
-    pList += "year" -> year
-    pList += "userid" -> uid
+        pList.clear()
+        pList += "year" -> year
+        pList += "userid" -> uid
 
-    val entList: List[Aggregates] = getList("allq", byMonthsql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
-    Ok(jArray(entList.map(_.toJSON)))
+        val aggList: List[Aggregates] = getList("allq", byMonthsql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
+        val json: Json =
+          if (aggList.nonEmpty) {
+            val result = jArray(aggList.map(_.toJSON))
+            setSeq(key, result.nospaces)
+            result
+          } else
+            Json.obj("result" -> jString("none"))
+      Ok(json)
+      case Some(i: String) =>
+        val iJson = Parse.parseOption(i)
+        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+      case t: Any => Ok("broke")
+    }
   }
 
   /**
@@ -290,26 +304,40 @@ object Application extends Controller with myTypes with Sha256 {
    * @param email key
    * @return
    */
-  def byEmail(email: String)=  Action {
-    colOrder = Seq("id","username","password","role","nodata","joined_date","activation","active_timestamp","active")
+  def byEmail(email: String)=  Action.async {
+    val key = s"email-$email"
+    getSeq(key).map {
+      case None =>
+        colOrder = Seq("id","username","password","role","nodata","joined_date","activation","active_timestamp","active")
 
-    colMap.clear()
-    colMap += "u.id" -> "id"
-    colMap += "u.username" -> "username"
-    colMap += "u.password" -> "password"
-    colMap += "u.role" -> "role"
-    colMap += "u.nodata" -> "nodata"
-    colMap += "u.joined_date" -> "joined_date"
-    colMap += "u.activation" -> "activation"
-    colMap += "u.active_timestamp" -> "active_timestamp"
-    colMap += "u.active" -> "active"
+        colMap.clear()
+        colMap += "u.id" -> "id"
+        colMap += "u.username" -> "username"
+        colMap += "u.password" -> "password"
+        colMap += "u.role" -> "role"
+        colMap += "u.nodata" -> "nodata"
+        colMap += "u.joined_date" -> "joined_date"
+        colMap += "u.activation" -> "activation"
+        colMap += "u.active_timestamp" -> "active_timestamp"
+        colMap += "u.active" -> "active"
 
-    pList.clear()
-    pList += "email" -> email
+        pList.clear()
+        pList += "email" -> email
 
-    val aggList = getList("allq", byEmailsql, colMap, pList, EmailUser)
-    val result = genJson(colOrder.toArray, aggList.asInstanceOf[List[EmailUser]]) //, m)
-    Ok(result)
+        val aggList = getList("allq", byEmailsql, colMap, pList, EmailUser).asInstanceOf[List[EmailUser]]
+        val retJson: Json =
+          if (aggList.nonEmpty) {
+            val result = jArray(aggList.map(_.toJSON))
+            setSeq(key, result.nospaces)
+            result
+          } else
+            Json.obj("result" -> jString("none"))
+        Ok(retJson)
+      case Some(i: String) =>
+        val iJson = Parse.parseOption(i)
+        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+      case t: AnyRef => Ok("broke")
+    }
   }
 
   def validateUser(name: String, passwd: String) = Action {
@@ -604,18 +632,38 @@ object Application extends Controller with myTypes with Sha256 {
   }
 
   /**
+   * speed up by mem caching the crud value
+   * @param id
+   * @param key
+   * @param valOpt
+   * @return
+   */
+  def processGet(id: Long, key: String, valOpt: Option[BaseObject]): Result = {
+        val (jSon, valid) =
+          if (valOpt != None) {
+            (valOpt.get.toJSON, true)
+          } else
+            (Json("badkey" -> jNumber(id)), false)
+        if (valid)
+          setSeq(key, jSon.nospaces)
+        Ok(jSon)
+  }
+
+  /**
    * from crud operations - get User entity
    * @param id
    * @return
    */
-  def getUser(id: Long) = Action {
-    val uzer = Uzer.find(id)
-    val jSon =
-      if (uzer != None)
-        uzer.get.toJSON
-      else
-        Json("badkey" -> jNumber(id))
-    Ok(jSon)
+  def getUser(id: Long) = Action.async {
+    val key = s"crud-user-$id"
+    getSeq(key).map {
+      case None =>
+        processGet(id, key, Uzer.find(id))
+      case Some(i: String) =>
+        val iJson = Parse.parseOption(i)
+        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+      case t: AnyRef => Ok(jString("broke"))
+    }
   }
 
   /**
@@ -623,14 +671,16 @@ object Application extends Controller with myTypes with Sha256 {
    * @param id
    * @return
    */
-  def getContact(id: Long) = Action {
-    val contact = Contact.find(id)
-    val jSon =
-      if (contact != None)
-        contact.get.toJSON
-      else
-        Json("badkey" -> jNumber(id))
-    Ok(jSon)
+  def getContact(id: Long) = Action.async {
+    val key = s"crud-contact-$id"
+    getSeq(key).map {
+      case None =>
+        processGet(id, key, Contact.find(id))
+      case Some(i: String) =>
+        val iJson = Parse.parseOption(i)
+        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+      case t: AnyRef => Ok(jString("broke"))
+    }
   }
 
   /**
@@ -638,14 +688,16 @@ object Application extends Controller with myTypes with Sha256 {
    * @param id
    * @return
    */
-  def getMember(id: Long) = Action {
-    val member = Member.find(id)
-    val jSon =
-      if (member != None)
-        member.get.toJSON
-      else
-        Json("badkey" -> jNumber(id))
-    Ok(jSon)
+  def getMember(id: Long) = Action.async {
+    val key = s"crud-member-$id"
+    getSeq(key).map {
+      case None =>
+        processGet(id, key, Member.find(id))
+      case Some(i: String) =>
+        val iJson = Parse.parseOption(i)
+        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+      case t: AnyRef => Ok(jString("broke"))
+    }
   }
 
   /**
@@ -653,14 +705,16 @@ object Application extends Controller with myTypes with Sha256 {
    * @param id
    * @return
    */
-  def getTransactions(id: Long) = Action {
-    val transactions = Transactions.find(id)
-    val jSon =
-      if (transactions != None)
-        transactions.get.toJSON
-      else
-        Json("badkey" -> jNumber(id))
-    Ok(jSon)
+  def getTransactions(id: Long) = Action.async {
+    val key = s"crud-member-$id"
+    getSeq(key).map {
+      case None =>
+        processGet(id, key, Transactions.find(id))
+      case Some(i: String) =>
+        val iJson = Parse.parseOption(i)
+        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+      case t: AnyRef => Ok(jString("broke"))
+    }
   }
 
   /**
@@ -686,7 +740,7 @@ object Application extends Controller with myTypes with Sha256 {
     val uzerRes = request.body.validate[Uzer](uzerUpdateReads)
     uzerRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> jString("KO")))
       },
       uz => {
         val newuzer = uzerRes.get
@@ -695,9 +749,11 @@ object Application extends Controller with myTypes with Sha256 {
           val curuzer = curResult.get
           newuzer.id = userid
           Uzer.update(newuzer)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(userid)).nospaces)
+          val jsonVal = curuzer.toJSON
+          setSeq(s"crud-user-$userid" ,jsonVal.nospaces)
+          Ok(jsonVal)
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")).nospaces)
+          BadRequest(Json.obj("status" -> jString("NF")))
         }
       }
     )
