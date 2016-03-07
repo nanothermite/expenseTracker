@@ -74,7 +74,7 @@ object Application extends Controller with myTypes with Sha256 {
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "u.username = :username"
-  val validatesql = "select u.password " +
+  val validatesql = "select u.password, u.id " +
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "u.username = :username"
@@ -348,10 +348,11 @@ object Application extends Controller with myTypes with Sha256 {
     pList += "username" -> name
 
     val pwdList = getList("allq", validatesql, colMap, pList, MemberUser)
-    val pwdHash = if (pwdList.nonEmpty) pwdList.head.asInstanceOf[MemberUser].password else ""
+    val membUser = pwdList.head.asInstanceOf[MemberUser]
+    val pwdHash = if (pwdList.nonEmpty) membUser.password else ""
     val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
     val jsRet = Json.jString(if (valid) "auth" else "denied")
-    Ok(Json.obj("access"->jsRet).nospaces)
+    Ok(Json.obj("access"->jsRet, "uid"-> Json.jNumber((if (valid)membUser.id else -1))).nospaces)
   }
 
   /**
