@@ -2,46 +2,50 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Home page
-GET           /                                     controllers.Application.index
-GET           /get/Month/:m/:uid                    controllers.Application.byMonth(m: Integer, uid: Integer)
-GET           /get/Quarter/:m/:uid                  controllers.Application.byQuarter(m: Integer, uid: Integer)
-GET           /get/Category/:m/:uid                 controllers.Application.byCategory(m: Integer, uid: Integer)
-GET           /get/Email/:email                     controllers.Application.byEmail(email: String)
-GET           /get/Username/:username               controllers.Application.byUsername(username: String)
-GET           /get/Years/:uid                       controllers.Application.byYears(uid: Integer)
+# for CORS
+OPTIONS       /                                      controllers.Application.options(path="")
+OPTIONS       /*path                                 controllers.Application.options(path)
 
-GET           /valid/User/:userid/:pwd              controllers.Application.validateUser(userid: String, pwd: String)
+# Home page
+GET            /                                      controllers.Application.index
+GET            /get/Month/:m/:uid                     controllers.Application.byMonth(m: Integer, uid: Integer)
+GET            /get/Quarter/:m/:uid                   controllers.Application.byQuarter(m: Integer, uid: Integer)
+GET            /get/Category/:m/:uid                  controllers.Application.byCategory(m: Integer, uid: Integer)
+GET            /get/Email/:email                      controllers.Application.byEmail(email: String)
+GET            /get/Username/:username                controllers.Application.byUsername(username: String)
+GET            /get/Years/:uid                        controllers.Application.byYears(uid: Integer)
+
+GET            /valid/User/:userid/:pwd               controllers.Application.validateUser(userid: String, pwd: String)
 
 # create objects
-POST          /add/User                             controllers.Application.addUser
-POST          /add/Member/:userid                   controllers.Application.addMember(userid: Long)
-POST          /add/Contact/:userid                  controllers.Application.addContact(userid: Long)
-POST          /add/Xaction/:userid/:contactid       controllers.Application.addTransaction(userid: Long, contactid: Long)
+POST           /add/User                              controllers.Application.addUser
+POST           /add/Member/:userid                    controllers.Application.addMember(userid: Long)
+POST           /add/Contact/:userid                   controllers.Application.addContact(userid: Long)
+POST           /add/Xaction/:userid/:contactid        controllers.Application.addTransaction(userid: Long, contactid: Long)
 
 # find entities
-GET           /get/User/:id                         controllers.Application.getUser(id: Long)
-GET           /get/Contact/:id                      controllers.Application.getContact(id: Long)
-GET           /get/Member/:id                       controllers.Application.getMember(id: Long)
-GET           /get/Xaction/:id                      controllers.Application.getTransactions(id: Long)
+GET            /get/User/:id                          controllers.Application.getUser(id: Long)
+GET            /get/Contact/:id                       controllers.Application.getContact(id: Long)
+GET            /get/Member/:id                        controllers.Application.getMember(id: Long)
+GET            /get/Xaction/:id                       controllers.Application.getTransactions(id: Long)
 
 # update existing objects
-POST          /update/User/:userid                  controllers.Application.updateUser(userid: Long)
-POST          /update/Member/:memberid              controllers.Application.updateMember(memberid: Long)
-POST          /update/Contact/:contactid            controllers.Application.updateContact(contactid: Long)
-POST          /update/Xaction/:xactid               controllers.Application.updateTransaction(xactid: Long)
+POST           /update/User/:userid                   controllers.Application.updateUser(userid: Long)
+POST           /update/Member/:memberid               controllers.Application.updateMember(memberid: Long)
+POST           /update/Contact/:contactid             controllers.Application.updateContact(contactid: Long)
+POST           /update/Xaction/:xactid                controllers.Application.updateTransaction(xactid: Long)
 
 # drop existing objects
-DELETE        /drop/User/:userid                    controllers.Application.dropUser(userid: Long)
-DELETE        /drop/Member/:memberid                controllers.Application.dropMember(memberid: Long)
-DELETE        /drop/Contact/:contactid              controllers.Application.dropContact(contactid: Long)
-DELETE        /drop/Xaction/:xactid                 controllers.Application.dropTransaction(xactid: Long)
+DELETE         /drop/User/:userid                     controllers.Application.dropUser(userid: Long)
+DELETE         /drop/Member/:memberid                 controllers.Application.dropMember(memberid: Long)
+DELETE         /drop/Contact/:contactid               controllers.Application.dropContact(contactid: Long)
+DELETE         /drop/Xaction/:xactid                  controllers.Application.dropTransaction(xactid: Long)
 
 # memcached ops
-GET           /mem/add/:k/:v                        controllers.Application.memadd(k: String, v: String)
-GET           /mem/set/:k/:v                        controllers.Application.memset(k: String, v: String)
-GET           /mem/get/:k                           controllers.Application.memget(k: String)
-GET           /mem/del/:k                           controllers.Application.memdrop(k: String)
+GET            /mem/add/:k/:v                         controllers.Application.memadd(k: String, v: String)
+GET            /mem/set/:k/:v                         controllers.Application.memset(k: String, v: String)
+GET            /mem/get/:k                            controllers.Application.memget(k: String)
+GET            /mem/del/:k                            controllers.Application.memdrop(k: String)
 
 # Map static resources from the /public folder to the /assets URL path
-GET           /assets/*file                         controllers.Assets.at(path="/public", file)
+GET            /assets/*file                          controllers.Assets.at(path="/public", file)

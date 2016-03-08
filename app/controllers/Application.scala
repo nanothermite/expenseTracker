@@ -186,6 +186,12 @@ object Application extends Controller with myTypes with Sha256 {
     jRowBuf.toList
   }
 
+  def options(path: String) = CorsAction {
+    Action { request =>
+      Ok.withHeaders(ACCESS_CONTROL_ALLOW_HEADERS -> Seq(AUTHORIZATION, CONTENT_TYPE, "Target-URL").mkString(","))
+    }
+  }
+
   /**
    * aggregate by month for a selected year for a particular userid
    * @param year key
@@ -352,7 +358,7 @@ object Application extends Controller with myTypes with Sha256 {
     val pwdHash = if (pwdList.nonEmpty) membUser.password else ""
     val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
     val jsRet = Json.jString(if (valid) "auth" else "denied")
-    Ok(Json.obj("access"->jsRet, "uid"-> Json.jNumber((if (valid)membUser.id else -1))).nospaces)
+    Ok(Json.obj("access"->jsRet, "uid"-> Json.jNumber(if (valid) membUser.id else -1)).nospaces)
   }
 
   /**
@@ -634,14 +640,14 @@ object Application extends Controller with myTypes with Sha256 {
 
   /**
    * speed up by mem caching the crud value
-   * @param id
-   * @param key
-   * @param valOpt
+   * @param id synth
+   * @param key pattern
+   * @param valOpt optional
    * @return
    */
   def processGet(id: Long, key: String, valOpt: Option[BaseObject]): Result = {
         val (jSon, valid) =
-          if (valOpt != None) {
+          if (valOpt.isDefined) {
             (valOpt.get.toJSON, true)
           } else
             (Json("badkey" -> jNumber(id)), false)
@@ -652,7 +658,7 @@ object Application extends Controller with myTypes with Sha256 {
 
   /**
    * from crud operations - get User entity
-   * @param id
+   * @param id synth
    * @return
    */
   def getUser(id: Long) = Action.async {
@@ -669,7 +675,7 @@ object Application extends Controller with myTypes with Sha256 {
 
   /**
    * from crud operations - get Contact entity
-   * @param id
+   * @param id synth
    * @return
    */
   def getContact(id: Long) = Action.async {
@@ -686,7 +692,7 @@ object Application extends Controller with myTypes with Sha256 {
 
   /**
    * from crud operations - get Member entity
-   * @param id
+   * @param id synth
    * @return
    */
   def getMember(id: Long) = Action.async {
@@ -703,7 +709,7 @@ object Application extends Controller with myTypes with Sha256 {
 
   /**
    * from crud operations - get Transactions entity
-   * @param id
+   * @param id synth
    * @return
    */
   def getTransactions(id: Long) = Action.async {
@@ -982,7 +988,7 @@ object Application extends Controller with myTypes with Sha256 {
    */
   def memget(key: String) = Action.async {
     getSeq(key).map {
-      case Some(i: String) => Ok(if (i != None) i else "nf")
+      case Some(i: String) => Ok(if (i != null) i else "nf")
       case t: AnyRef => Ok("broke")
     }
   }
@@ -999,11 +1005,10 @@ object Application extends Controller with myTypes with Sha256 {
     }
   }
 
-  implicit def contentTypeOf_ArgonautJson(implicit codec: Codec): ContentTypeOf[argonaut.Json] = {
+  implicit def contentTypeOf_ArgonautJson(implicit codec: Codec): ContentTypeOf[argonaut.Json] =
     ContentTypeOf[argonaut.Json](Some(ContentTypes.JSON))
-  }
 
   implicit def writeableOf_ArgonautJson(implicit codec: Codec): Writeable[argonaut.Json] = {
-    Writeable(jsval => codec.encode(jsval.toString))
+    Writeable(jsval => codec.encode(jsval.toString()))
   }
 }

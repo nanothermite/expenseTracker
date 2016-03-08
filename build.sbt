@@ -11,10 +11,11 @@ libraryDependencies ++= Seq(
   javaEbean,
   cache,
   ws,
+  filters,
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "io.argonaut" %% "argonaut" % "6.0.4",
   "com.bionicspirit" %% "shade" % "1.6.0",
-  "com.github.nscala-time"  %%  "nscala-time" %  "2.4.0"
+  "com.github.nscala-time"  %%  "nscala-time" %  "2.10.0"
 )
 
 resolvers ++= Seq(
