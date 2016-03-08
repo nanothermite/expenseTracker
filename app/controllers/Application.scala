@@ -74,10 +74,14 @@ object Application extends Controller with myTypes with Sha256 {
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "u.username = :username"
-  val validatesql = "select u.password, u.id " +
+  val validateUserSql = "select u.password, u.id " +
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "u.username = :username"
+  val validateEmailSql = "select u.password, u.id " +
+    "from Member m, Uzer u " +
+    "where m.uid = u.id and " +
+    "m.email = :email"
 
   val myCache:Memcached = Shared.memd.get
   val minDuration:Duration = 1.milli
@@ -347,13 +351,14 @@ object Application extends Controller with myTypes with Sha256 {
   }
 
   def validateUser(name: String, passwd: String) = Action {
+    val isEmail = name.contains("@")
     colMap.clear()
     colMap += "u.password" -> "password"
 
     pList.clear()
-    pList += "username" -> name
+    pList += (if (isEmail) "email" -> name else "username" -> name)
 
-    val pwdList = getList("allq", validatesql, colMap, pList, MemberUser)
+    val pwdList = getList("allq", if (isEmail) validateEmailSql else validateUserSql, colMap, pList, MemberUser)
     val membUser = pwdList.head.asInstanceOf[MemberUser]
     val pwdHash = if (pwdList.nonEmpty) membUser.password else ""
     val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
