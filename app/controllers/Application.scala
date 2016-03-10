@@ -35,22 +35,22 @@ object Application extends Controller with myTypes with Sha256 {
 
   val byMonthsql = "select sum(s.credit) as credit, " +
     "sum(s.debit) as debit, " +
-    "cast(extract(month from s.trandate) as text) as period, " +
+    "cast(extract(month from s.trandate) as bigint) as period, " +
     " 'N' as periodType " +
     "from Transactions s " +
     "where extract(year from s.trandate) = :year and " +
     "s.userid = :userid " +
-    "group by cast(extract(month from s.trandate) as text) " +
-    "order by cast(extract(month from s.trandate) as text)"
+    "group by cast(extract(month from s.trandate) as bigint) " +
+    "order by cast(extract(month from s.trandate) as bigint)"
   val byQuartersql = "select sum(s.credit) as credit, " +
     "sum(s.debit) as debit, " +
-    "cast(extract(quarter from s.trandate) as text) as period, " +
+    "cast(extract(quarter from s.trandate) as bigint) as period, " +
     " 'N' as periodType " +
     "from Transactions s " +
     "where extract(year from s.trandate) = :year and " +
     "s.userid = :userid " +
-    "group by cast(extract(quarter from s.trandate) as text) " +
-    "order by cast(extract(quarter from s.trandate) as text)"
+    "group by cast(extract(quarter from s.trandate) as bigint) " +
+    "order by cast(extract(quarter from s.trandate) as bigint)"
   val byCategorysql = "select sum(u.credit) as credit, " +
     "sum(u.debit) as debit, " +
     "u.trantype as period, " +
@@ -211,7 +211,7 @@ object Application extends Controller with myTypes with Sha256 {
         colMap.clear()
         colMap += "sum(s.credit)" -> "credit"
         colMap += "sum(s.debit)" -> "debit"
-        colMap += "cast(extract(month from s.trandate) as text)" -> "period"
+        colMap += "cast(extract(month from s.trandate) as bigint)" -> "period"
         colMap += "'N'" -> "periodType"
 
         pList.clear()

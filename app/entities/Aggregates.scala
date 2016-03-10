@@ -20,7 +20,7 @@ import scala.collection.JavaConverters._
 class Aggregates extends BaseObject {
   var credit: java.lang.Double = null
   var debit: java.lang.Double = null
-  var period:String = null
+  var period: String = null
   var periodType:String = null
 
   override def toJSON: Json =
@@ -69,5 +69,5 @@ object Aggregates extends Dao(classOf[Aggregates]){
   }
 
   def toAggregate(agg: Aggregates): Aggregate =
-    Aggregate(agg.debit, agg.credit, agg.period, agg.periodType)
+    Aggregate(agg.debit, agg.credit, agg.period.toString, agg.periodType)
 }
