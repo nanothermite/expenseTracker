@@ -81,7 +81,14 @@ class Uzer extends BaseObject {
 }
 
 object Uzer extends Dao(classOf[Uzer]) {
-  def all(): List[Uzer] = Uzer.find.findList().asScala.toList
+  def all(): Option[List[Uzer]] = {
+    val objList = Uzer.find.findList
+    Some(if (objList.nonEmpty)
+      objList.asScala.toList
+    else
+      List.empty[Uzer]
+    )
+  }
 
   def allq(sql: RawSql, pList:Option[java.util.HashMap[String, AnyRef]]): List[Uzer] = {
     var users: List[Uzer] = List.empty[Uzer]

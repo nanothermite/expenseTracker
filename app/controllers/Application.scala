@@ -285,7 +285,7 @@ object Application extends Controller with myTypes with Sha256 {
 
         colMap = collection.mutable.Map("sum(s.credit)" -> "credit",
           "sum(s.debit)" -> "debit",
-          "cast(extract(quarter from s.trandate) as text)" -> "period",
+          "cast(extract(quarter from s.trandate) as bigint)" -> "period",
           "'N'" -> "periodType")
 
         pList.clear()
@@ -670,7 +670,20 @@ object Application extends Controller with myTypes with Sha256 {
     val key = s"crud-user-$id"
     getSeq(key).map {
       case None =>
-        processGet(id, key, Uzer.find(id))
+        if (id > 0)
+          processGet(id, key, Uzer.find(id))
+        else {
+          val objList = Uzer.all
+          val json: Json =
+            if (objList.get.nonEmpty) {
+              val result = jArray(objList.get.sortBy(_.id).map(_.toJSON))
+              setSeq(key, result.nospaces)
+              result
+            } else {
+              Json.obj("result" -> jString("none"))
+            }
+          Ok(json)
+        }
       case Some(i: String) =>
         val iJson = Parse.parseOption(i)
         Ok(if (iJson.nonEmpty)iJson.get else jNull)
@@ -687,7 +700,20 @@ object Application extends Controller with myTypes with Sha256 {
     val key = s"crud-contact-$id"
     getSeq(key).map {
       case None =>
-        processGet(id, key, Contact.find(id))
+        if (id > 0)
+          processGet(id, key, Contact.find(id))
+        else {
+          val objList = Contact.all
+          val json: Json =
+            if (objList.get.nonEmpty) {
+              val result = jArray(objList.get.sortBy(_.id).map(_.toJSON))
+              setSeq(key, result.nospaces)
+              result
+            } else {
+              Json.obj("result" -> jString("none"))
+            }
+          Ok(json)
+        }
       case Some(i: String) =>
         val iJson = Parse.parseOption(i)
         Ok(if (iJson.nonEmpty)iJson.get else jNull)
@@ -704,7 +730,20 @@ object Application extends Controller with myTypes with Sha256 {
     val key = s"crud-member-$id"
     getSeq(key).map {
       case None =>
-        processGet(id, key, Member.find(id))
+        if (id > 0)
+          processGet(id, key, Member.find(id))
+        else {
+          val objList = Member.all
+          val json: Json =
+            if (objList.get.nonEmpty) {
+              val result = jArray(objList.get.sortBy(_.id).map(_.toJSON))
+              setSeq(key, result.nospaces)
+              result
+            } else {
+              Json.obj("result" -> jString("none"))
+            }
+          Ok(json)
+        }
       case Some(i: String) =>
         val iJson = Parse.parseOption(i)
         Ok(if (iJson.nonEmpty)iJson.get else jNull)
@@ -718,10 +757,23 @@ object Application extends Controller with myTypes with Sha256 {
    * @return
    */
   def getTransactions(id: Long) = Action.async {
-    val key = s"crud-member-$id"
+    val key = s"crud-xaction-$id"
     getSeq(key).map {
       case None =>
-        processGet(id, key, Transactions.find(id))
+        if (id > 0)
+          processGet(id, key, Transactions.find(id))
+        else {
+          val objList = Transactions.all
+          val json: Json =
+            if (objList.get.nonEmpty) {
+              val result = jArray(objList.get.sortBy(_.id).map(_.toJSON))
+              setSeq(key, result.nospaces)
+              result
+            } else {
+              Json.obj("result" -> jString("none"))
+            }
+          Ok(json)
+        }
       case Some(i: String) =>
         val iJson = Parse.parseOption(i)
         Ok(if (iJson.nonEmpty)iJson.get else jNull)

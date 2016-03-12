@@ -8,6 +8,7 @@ import argonaut._
 import com.avaje.ebean.RawSql
 import common.{BaseObject, Dao}
 
+import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 /**
@@ -58,7 +59,7 @@ class Contact extends BaseObject {
   def toJSON: Json = Json(
     "id" -> jNumber(id),
     "version" -> jString(version.toString),
-    "bizname" -> jString(bizname),
+    "bizname" -> jsonNullCheck(bizname),
     "industry" -> jsonNullCheck(industry),
     "phone" -> jsonNullCheck(phone),
     "city" -> jsonNullCheck(city),
@@ -68,7 +69,14 @@ class Contact extends BaseObject {
 }
 
 object Contact extends Dao(classOf[Contact]) {
-  def all() : List[Contact] = Contact.find.findList().asScala.toList
+  def all(): Option[List[Contact]] =  {
+    val objList = Contact.find.findList
+    Some(if (objList.nonEmpty)
+      objList.asScala.toList
+    else
+      List.empty[Contact]
+    )
+  }
 
   def allq(sql:RawSql) : List[Contact] = {
     val q = find

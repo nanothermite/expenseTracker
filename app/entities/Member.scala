@@ -14,13 +14,21 @@ import javax.validation.constraints.Size
 import org.joda.time.DateTime
 import utils.DateFormatter
 
+import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 /**
  * Created by hkatz on 3/21/15.
  */
 object Member extends Dao(classOf[Member]) {
-  def all() : List[Member] = Member.find.findList().asScala.toList
+  def all() : Option[List[Member]] =  {
+    val objList = Member.find.findList
+    Some(if (objList.nonEmpty)
+      objList.asScala.toList
+    else
+      List.empty[Member]
+    )
+  }
 
   def allq(sql:RawSql) : List[Member] = {
     val q = find

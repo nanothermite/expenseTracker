@@ -24,9 +24,13 @@ POST           /add/Contact/:userid                   controllers.Application.ad
 POST           /add/Xaction/:userid/:contactid        controllers.Application.addTransaction(userid: Long, contactid: Long)
 
 # find entities
+GET            /get/User                              controllers.Application.getUser(id: Long = 0)
 GET            /get/User/:id                          controllers.Application.getUser(id: Long)
+GET            /get/Contact                           controllers.Application.getContact(id: Long = 0)
 GET            /get/Contact/:id                       controllers.Application.getContact(id: Long)
+GET            /get/Member                            controllers.Application.getMember(id: Long = 0)
 GET            /get/Member/:id                        controllers.Application.getMember(id: Long)
+GET            /get/Xaction                           controllers.Application.getTransactions(id: Long = 0)
 GET            /get/Xaction/:id                       controllers.Application.getTransactions(id: Long)
 
 # update existing objects

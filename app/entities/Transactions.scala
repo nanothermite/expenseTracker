@@ -12,6 +12,7 @@ import org.joda.time.DateTime
 import play.data.validation.Constraints
 import utils.DateFormatter
 
+import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 /**
@@ -23,7 +24,14 @@ object Transactions extends Dao(classOf[Transactions]) {
   val byQuarter = "byQuarter"
   val year = "year"
 
-  def all() : List[Transactions] = Transactions.find.findList().asScala.toList
+  def all: Option[List[Transactions]] = {
+    val objList = Transactions.find.findList
+    Some(if (objList.nonEmpty)
+      objList.asScala.toList
+    else
+      List.empty[Transactions]
+    )
+  }
 
   def allq(sql:RawSql) : List[Transactions] = {
     val q = find
