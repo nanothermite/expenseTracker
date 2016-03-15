@@ -3,7 +3,7 @@ package controllers
 import java.nio.charset.Charset
 import java.util.Date
 
-import _root_.common.{BaseObject, Shared, myTypes}
+import _root_.common.{ExtraJsonHelpers, BaseObject, Shared, myTypes}
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean._
@@ -24,7 +24,7 @@ import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
 
-object Application extends Controller with myTypes with Sha256 {
+object QueryController extends Controller with myTypes with Sha256 with ExtraJsonHelpers {
 
   val m = ru.runtimeMirror(getClass.getClassLoader)
 
@@ -363,7 +363,7 @@ object Application extends Controller with myTypes with Sha256 {
     val pwdHash = if (pwdList.nonEmpty) membUser.password else ""
     val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
     val jsRet = Json.jString(if (valid) "auth" else "denied")
-    Ok(Json.obj("access"->jsRet, "uid"-> Json.jNumber(if (valid) membUser.id else -1)).nospaces)
+    Ok(Json.obj("access"->jsRet, "uid"-> Json.jNumber(if (valid) membUser.id else -1)))
   }
 
   /**
@@ -396,7 +396,7 @@ object Application extends Controller with myTypes with Sha256 {
 
     val aggList = getList("allq", byUsernamesql, colMap, pList, MemberUser)
     val result = genJson(MemberUser.getColOrder.toArray[String], aggList.asInstanceOf[List[MemberUser]]) //, m)
-    Ok(result.nospaces)
+    Ok(result)
   }
 
   /**
@@ -415,7 +415,7 @@ object Application extends Controller with myTypes with Sha256 {
 
     val aggList = getList("allq", getYearssql, colMap, pList, Years)
     val result = genJson(colOrder.toArray[String], aggList.asInstanceOf[List[Years]]) //, m)
-    Ok(result.nospaces)
+    Ok(result)
   }
 
   /**
@@ -427,9 +427,9 @@ object Application extends Controller with myTypes with Sha256 {
     val curResult = Uzer.find(userid)
     if (curResult.isDefined) {
       Uzer.delete(curResult.get)
-      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(userid)).nospaces)
+      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(userid)))
     } else {
-      BadRequest(Json.obj("status" -> jString("NF")).nospaces)
+      BadRequest(Json.obj("status" -> jString("NF")))
     }
   }
 
@@ -442,9 +442,9 @@ object Application extends Controller with myTypes with Sha256 {
     val curResult = Member.find(memberid)
     if (curResult.isDefined) {
       Member.delete(curResult.get)
-      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(memberid)).nospaces)
+      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(memberid)))
     } else {
-      BadRequest(Json.obj("status" -> jString("NF")).nospaces)
+      BadRequest(Json.obj("status" -> jString("NF")))
     }
   }
 
@@ -457,9 +457,9 @@ object Application extends Controller with myTypes with Sha256 {
     val curResult = Contact.find(contactid)
     if (curResult.isDefined) {
       Contact.delete(curResult.get)
-      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contactid)).nospaces)
+      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contactid)))
     } else {
-      BadRequest(Json.obj("status" -> jString("NF")).nospaces)
+      BadRequest(Json.obj("status" -> jString("NF")))
     }
   }
 
@@ -472,9 +472,9 @@ object Application extends Controller with myTypes with Sha256 {
     val curResult = Transactions.find(xactid)
     if (curResult.isDefined) {
       Transactions.delete(curResult.get)
-      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(xactid)).nospaces)
+      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(xactid)))
     } else {
-      BadRequest(Json.obj("status" -> jString("NF")).nospaces)
+      BadRequest(Json.obj("status" -> jString("NF")))
     }
   }
 
@@ -500,12 +500,12 @@ object Application extends Controller with myTypes with Sha256 {
     val uzerRes = request.body.validate[Uzer]
     uzerRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val uzer = uzerRes.get
         Uzer.save(uzer)
-        Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(uzer.id)).nospaces)
+        Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(uzer.id)))
       }
     )
   }
@@ -533,7 +533,7 @@ object Application extends Controller with myTypes with Sha256 {
     val contactRes = request.body.validate[Contact]
     contactRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val contact = contactRes.get
@@ -543,9 +543,9 @@ object Application extends Controller with myTypes with Sha256 {
           parent = parentResult.get
           contact.userid = parent
           Contact.save(contact)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contact.id)).nospaces)
+          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contact.id)))
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")).nospaces)
+          BadRequest(Json.obj("status" -> jString("NF")))
         }
       }
     )
@@ -580,7 +580,7 @@ object Application extends Controller with myTypes with Sha256 {
     val memberRes = request.body.validate[Member]
     memberRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val member = memberRes.get
@@ -589,9 +589,9 @@ object Application extends Controller with myTypes with Sha256 {
           val parent = parentResult.get
           member.uid = parent
           Member.save(member)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(member.id)).nospaces)
+          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(member.id)))
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")).nospaces)
+          BadRequest(Json.obj("status" -> jString("NF")))
         }
       }
     )
@@ -623,7 +623,7 @@ object Application extends Controller with myTypes with Sha256 {
     val transRes = request.body.validate[Transactions]
     transRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val trans = transRes.get
@@ -635,9 +635,9 @@ object Application extends Controller with myTypes with Sha256 {
           trans.userid = parent
           trans.contact = contact
           Transactions.save(trans)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(trans.id)).nospaces)
+          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(trans.id)))
         } else {
-          Ok(Json.obj("status" -> jString("KO")).nospaces)
+          Ok(Json.obj("status" -> jString("KO")))
         }
       }
     )
@@ -852,7 +852,7 @@ object Application extends Controller with myTypes with Sha256 {
     val memberRes = request.body.validate[Member](memberUpdateReads)
     memberRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val newmember = memberRes.get
@@ -861,9 +861,9 @@ object Application extends Controller with myTypes with Sha256 {
           val curmember = curResult.get
           newmember.id = memberid
           Member.update(newmember)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(memberid)).nospaces)
+          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(memberid)))
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")).nospaces)
+          BadRequest(Json.obj("status" -> jString("NF")))
         }
       }
     )
@@ -891,7 +891,7 @@ object Application extends Controller with myTypes with Sha256 {
     val contactRes = request.body.validate[Contact](contactUpdateReads)
     contactRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val newcontact = contactRes.get
@@ -900,9 +900,9 @@ object Application extends Controller with myTypes with Sha256 {
           val curcontact = curResult.get
           newcontact.id = contactid
           Contact.update(newcontact)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contactid)).nospaces)
+          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contactid)))
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+          BadRequest(Json.obj("status" -> jString("NF"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
         }
       }
     )
@@ -933,7 +933,7 @@ object Application extends Controller with myTypes with Sha256 {
     val xactRes = request.body.validate[Transactions](transactionUpdateReads)
     xactRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val newxact = xactRes.get
@@ -942,9 +942,9 @@ object Application extends Controller with myTypes with Sha256 {
           val curxact = curResult.get         // needed for update below
           newxact.id = xactid
           Transactions.update(newxact)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(xactid)).nospaces)
+          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(xactid)))
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")).nospaces) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+          BadRequest(Json.obj("status" -> jString("NF"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
         }
       }
     )
@@ -1062,10 +1062,10 @@ object Application extends Controller with myTypes with Sha256 {
     }
   }
 
-  implicit def contentTypeOf_ArgonautJson(implicit codec: Codec): ContentTypeOf[argonaut.Json] =
+  /*implicit def contentTypeOf_ArgonautJson(implicit codec: Codec): ContentTypeOf[argonaut.Json] =
     ContentTypeOf[argonaut.Json](Some(ContentTypes.JSON))
 
   implicit def writeableOf_ArgonautJson(implicit codec: Codec): Writeable[argonaut.Json] = {
     Writeable(jsval => codec.encode(jsval.toString()))
-  }
+  } */
 }
