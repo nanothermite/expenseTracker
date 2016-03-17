@@ -5,7 +5,6 @@ import javax.persistence._
 
 import argonaut.Argonaut._
 import argonaut._
-
 import com.avaje.ebean.RawSql
 import common.{BaseObject, Dao}
 import org.joda.time.DateTime

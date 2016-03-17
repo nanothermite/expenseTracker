@@ -6,7 +6,7 @@ import argonaut._
 import play.api.mvc._
 import scala.util.Random
 
-object UploadController extends Controller with myTypes with ExtraJsonHelpers {
+class UploadController extends Controller with myTypes with ExtraJsonHelpers {
 
   var r = Random
 

@@ -1,6 +1,5 @@
 package entities
 
-import java.util.Date
 import javax.persistence._
 
 import com.avaje.ebean.RawSql

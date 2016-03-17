@@ -1,16 +1,13 @@
 package entities
 
 import java.util.Date
+import javax.persistence._
+import javax.validation.constraints.{Digits, NotNull, Pattern, Size}
 
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean.RawSql
 import common.{BaseObject, Dao}
-import javax.persistence._
-import javax.validation.constraints.Digits
-import javax.validation.constraints.NotNull
-import javax.validation.constraints.Pattern
-import javax.validation.constraints.Size
 import org.joda.time.DateTime
 import utils.DateFormatter
 

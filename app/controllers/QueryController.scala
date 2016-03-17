@@ -2,13 +2,12 @@ package controllers
 
 import java.nio.charset.Charset
 import java.util.Date
+import _root_.common.{Shared, BaseObject, ExtraJsonHelpers, myTypes}
 
-import _root_.common.{ExtraJsonHelpers, BaseObject, Shared, myTypes}
 import argonaut.Argonaut._
 import argonaut._
 import com.avaje.ebean._
 import entities._
-import play.api.http.{ContentTypeOf, ContentTypes, Writeable}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, JsValue, Reads}
 import play.api.mvc._
@@ -24,7 +23,7 @@ import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
 
-object QueryController extends Controller with myTypes with Sha256 with ExtraJsonHelpers {
+class QueryController extends Controller with myTypes with Sha256 with ExtraJsonHelpers {
 
   val m = ru.runtimeMirror(getClass.getClassLoader)
 
@@ -190,11 +189,11 @@ object QueryController extends Controller with myTypes with Sha256 with ExtraJso
     jRowBuf.toList
   }
 
-  def options(path: String) = CorsAction {
+  /*def options(path: String) = CorsAction {
     Action { request =>
       Ok.withHeaders(ACCESS_CONTROL_ALLOW_HEADERS -> Seq(AUTHORIZATION, CONTENT_TYPE, "Target-URL").mkString(","))
     }
-  }
+  }*/
 
   /**
    * aggregate by month for a selected year for a particular userid

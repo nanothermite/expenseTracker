@@ -1,10 +1,9 @@
 package common
 
-import play.api.http.{Writeable, ContentTypeOf, ContentTypes}
+import play.api.http.{ContentTypeOf, ContentTypes, Writeable}
 import play.api.mvc.Codec
 
-import scala.reflect._
-import scala.reflect.runtime.universe._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * Created by hkatz on 3/15/16.
