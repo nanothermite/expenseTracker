@@ -18,7 +18,7 @@ import scala.collection.JavaConverters._
  * Created by hkatz on 3/21/15.
  */
 object Member extends Dao(classOf[Member]) {
-  def all() : Option[List[Member]] =  {
+  def all: Option[List[Member]] =  {
     val objList = Member.find.findList
     Some(if (objList.nonEmpty)
       objList.asScala.toList

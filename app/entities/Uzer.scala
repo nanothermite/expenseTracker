@@ -81,7 +81,7 @@ class Uzer extends BaseObject {
 }
 
 object Uzer extends Dao(classOf[Uzer]) {
-  def all(): Option[List[Uzer]] = {
+  def all: Option[List[Uzer]] = {
     val objList = Uzer.find.findList
     Some(if (objList.nonEmpty)
       objList.asScala.toList

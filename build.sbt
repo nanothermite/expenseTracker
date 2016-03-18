@@ -17,7 +17,9 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "9.3-1102-jdbc41",
   "io.argonaut" %% "argonaut" % "6.0.4",
   "com.bionicspirit" %% "shade" % "1.6.0",
-  "com.github.nscala-time"  %%  "nscala-time" %  "2.10.0"
+  "com.github.nscala-time"  %%  "nscala-time" %  "2.10.0",
+  "org.apache.poi" % "poi" % "3.12",
+  "org.apache.poi" % "poi-ooxml" % "3.12"
 )
 
 resolvers += "Spy" at "http://files.couchbase.com/maven2/"

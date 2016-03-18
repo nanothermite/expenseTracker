@@ -1,22 +1,31 @@
 package actors
 
-import akka.actor.Actor.Receive
-import akka.actor.{Actor, Props}
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+
+import akka.actor.{ActorLogging, Actor, Props}
+import xls.ProcessXLS
 
 /**
  * Created by hkatz on 3/15/16.
  */
-object XLSActor {
-  def props = Props[XLSActor]
+case class XLSName(uploadType: String, name: String, file: File)
 
-  case class XLSName(name: String)
+object XLSActor {
+  private val statusMap = new ConcurrentHashMap[File, Boolean]()
+
+  private[XLSActor] def putStatusState(fileKey: File, state: Boolean) =
+    statusMap.put(fileKey, state)
+
+  def props = Props[XLSActor]
 }
 
-class XLSActor extends Actor {
-  import XLSActor._
+class XLSActor extends Actor with ActorLogging {
 
   override def receive: Receive = {
-    case XLSName(name: String) =>
-      sender() ! s"got $name"
+    case XLSName(uploadType: String, name: String, file: File) =>
+      XLSActor.putStatusState(file, false)
+      ProcessXLS.readFile(file, uploadType)
+      sender() ! s"got $name now"
   }
 }

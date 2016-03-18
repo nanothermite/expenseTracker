@@ -25,6 +25,8 @@ import scala.reflect.runtime.{universe => ru}
 
 class QueryController extends Controller with myTypes with Sha256 with ExtraJsonHelpers {
 
+  val r = Shared.r
+
   val m = ru.runtimeMirror(getClass.getClassLoader)
 
   var colOrder = Seq.empty[String] //new ArrayBuffer[String]()
@@ -349,6 +351,8 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     }
   }
 
+  def ranSession = (1 to 50).map(_ => r.nextPrintableChar).mkString("")
+
   def validateUser(name: String, passwd: String) = Action {
     val isEmail = name.contains("@")
     colMap.clear()
@@ -362,7 +366,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val pwdHash = if (pwdList.nonEmpty) membUser.password else ""
     val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
     val jsRet = Json.jString(if (valid) "auth" else "denied")
-    Ok(Json.obj("access"->jsRet, "uid"-> Json.jNumber(if (valid) membUser.id else -1)))
+    Ok(Json.obj("access"->jsRet, "uid"-> Json.jNumber(if (valid) membUser.id else -1), "sessAuth" -> jString(ranSession)))
   }
 
   /**

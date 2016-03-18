@@ -69,7 +69,7 @@ class Contact extends BaseObject {
 }
 
 object Contact extends Dao(classOf[Contact]) {
-  def all(): Option[List[Contact]] =  {
+  def all: Option[List[Contact]] =  {
     val objList = Contact.find.findList
     Some(if (objList.nonEmpty)
       objList.asScala.toList
@@ -85,7 +85,7 @@ object Contact extends Dao(classOf[Contact]) {
   }
 
   def create(id:Long, version:Integer, bizname:String, industry:String, phone:String, city:String, state:String, identifier:String, userid:Uzer): Unit = {
-    var contact = new Contact
+    val contact = new Contact
     contact.id = id
     contact.version = version
     contact.bizname = bizname
@@ -104,7 +104,7 @@ object Contact extends Dao(classOf[Contact]) {
   def getReqd : Map[String, Integer] = Map()
 
   def apply(/*version:Integer,*/ bizname:Option[String], industry:Option[String], phone:Option[String], city:Option[String], state:Option[String], identifier:Option[String]): Contact = {
-    var contact = new Contact
+    val contact = new Contact
     //contact.version = version
     if (bizname != None)
       contact.bizname = bizname.get

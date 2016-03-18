@@ -1,3 +1,9 @@
 #!/bin/bash
 
-CACHEDHOST=berne:11211 DATABASE_URL=jdbc:postgresql://berne/finance_dev DATABASE_USER=biz DATABASE_PWD=bts1ebtm activator -jvm-debug 9999
+HTTPS_PORT=8443
+APPLICATION_SECRET=`date | md5sum` \
+CACHEDHOST=berne:11211 \
+DATABASE_URL=jdbc:postgresql://berne/finance_dev \
+DATABASE_USER=biz \
+DATABASE_PWD=xxxxx \
+activator -jvm-debug 9999 "-Dhttps.port=$HTTPS_PORT"
