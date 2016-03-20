@@ -18,7 +18,6 @@ object ProcessXLS {
     Contact.apply(None, None, None, None, None, None)
   }
 
-
   def readFile(xlsFile: File, uploadType: String) = {
     val wb = WorkbookFactory.create(xlsFile)
 
