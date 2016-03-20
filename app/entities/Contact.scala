@@ -18,6 +18,7 @@ import scala.collection.JavaConverters._
 @Table (name = "contact")
 class Contact extends BaseObject {
   @Id
+  @GeneratedValue(strategy=GenerationType.AUTO)
   var id:Long = 0l
 
   @Column

@@ -132,6 +132,7 @@ object Transactions extends Dao(classOf[Transactions]) {
 @Entity
 class Transactions extends BaseObject {
   @Id
+  @GeneratedValue(strategy=GenerationType.AUTO)
   var id: Long = 0l
 
   @Constraints.Required

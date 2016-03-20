@@ -23,6 +23,7 @@ import scala.collection.JavaConverters._
 @Table(name = "uzer")
 class Uzer extends BaseObject {
   @Id
+  @GeneratedValue(strategy=GenerationType.AUTO)
   var id: Long = 0l
 
   @Pattern(regexp = "[A-Za-z0-9 ]*", message = "must contain only letters, digits and spaces")

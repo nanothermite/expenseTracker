@@ -143,6 +143,7 @@ object Member extends Dao(classOf[Member]) {
 @Table(name = "member")
 class Member extends BaseObject {
   @Id
+  @GeneratedValue(strategy=GenerationType.AUTO)
   var id: Long = 0l
 
   var email: String = null
