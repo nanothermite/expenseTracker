@@ -855,64 +855,47 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
 
   /**
    * update member
-   * @param memberid key
+   * @param id key
    * @return
    */
-  def updateMember(memberid: Long) = Action(BodyParsers.parse.json) { request =>
+  def updateMember(id: Long) = Action(BodyParsers.parse.json) { request =>
     val memberRes = request.body.validate[Member](memberUpdateReads)
     memberRes.fold(
-      errors => {
-        BadRequest(Json.obj("status" -> "KO")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
-      },
+      errors =>
+        BadRequest(Json.obj("status" -> "KO")), //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       uz => {
         val newmember = memberRes.get
-        val curResult = Member.find(memberid)
+        val curResult = Member.find(id)
         if (curResult.isDefined) {
           val curmember = curResult.get
-          newmember.id = memberid
+          newmember.id = id
           Member.update(newmember)
-          Ok(Json.obj("status" -> "OK", "id" -> memberid))
-        } else {
+          Ok(Json.obj("status" -> "OK", "id" -> id))
+        } else
           BadRequest(Json.obj("status" -> "NF"))
-        }
       }
     )
   }
 
   /**
-   * update contact - nothing reqd
-   *
-  val contactUpdateReads: Reads[Contact] = (
-    //(JsPath \ "version").read[Integer] and
-    (JsPath \ "bizname").readNullable[String] and
-      (JsPath \ "industry").readNullable[String] and
-      (JsPath \ "phone").readNullable[String] and
-      (JsPath \ "city").readNullable[String] and
-      (JsPath \ "state").readNullable[String] and
-      (JsPath \ "identifier").readNullable[String]
-    )(Contact.apply2 _) */
-
-  /**
    * update contact object
-   * @param contactid key
+   * @param id key
    * @return
    */
-  def updateContact(contactid: Long) = Action(BodyParsers.parse.json) { request =>
-    //val trans = request.body.transform[Contact]
-    val contactRes = request.body.validate[Contact] //(contactUpdateReads)
-    val contactJson = request.body
+  def updateContact(id: Long) = Action(BodyParsers.parse.json) { request =>
+    val jsonReq = request.body
+    val contactRes = jsonReq.validate[Contact]
     contactRes.fold(
       errors =>
         BadRequest(Json.obj("status" -> "KO")), //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       uz => {
-        val curResult = Contact.find(contactid)
+        val curResult = Contact.find(id)
         if (curResult.isDefined) {
-          val curcontact = curResult.get
-          val curJson = curcontact.toJSON
-          val updatedcontact = curJson.as[JsObject].deepMerge(contactJson.as[JsObject]).validate[Contact]
-          updatedcontact.get.id = contactid
+          val curJson = curResult.get.toJSON.as[JsObject]
+          val updatedcontact = curJson.deepMerge(jsonReq.as[JsObject]).validate[Contact]
+          updatedcontact.get.id = id
           Contact.update(updatedcontact.get)
-          Ok(Json.obj("status" -> "OK", "id" -> contactid))
+          Ok(Json.obj("status" -> "OK", "id" -> id))
         } else
           BadRequest(Json.obj("status" -> "NF")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       }
