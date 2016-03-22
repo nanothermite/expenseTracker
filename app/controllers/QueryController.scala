@@ -859,18 +859,22 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * @return
    */
   def updateMember(id: Long) = Action(BodyParsers.parse.json) { request =>
-    val memberRes = request.body.validate[Member](memberUpdateReads)
-    memberRes.fold(
+    val jsonReq = request.body
+    val validEnt = jsonReq.validate[Member](memberUpdateReads)
+    validEnt.fold(
       errors =>
         BadRequest(Json.obj("status" -> "KO")), //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       uz => {
-        val newmember = memberRes.get
         val curResult = Member.find(id)
         if (curResult.isDefined) {
-          val curmember = curResult.get
-          newmember.id = id
-          Member.update(newmember)
-          Ok(Json.obj("status" -> "OK", "id" -> id))
+          val curJson = curResult.get.toJSON.as[JsObject]
+          val updatedEnt = curJson.deepMerge(jsonReq.as[JsObject]).validate[Member](memberUpdateReads)
+          if (updatedEnt.isSuccess) {
+            updatedEnt.get.id = id
+            Member.update(updatedEnt.get)
+            Ok(Json.obj("status" -> "OK", "id" -> id))
+          } else
+            BadRequest(Json.obj("status" -> "KO"))
         } else
           BadRequest(Json.obj("status" -> "NF"))
       }
@@ -884,20 +888,23 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    */
   def updateContact(id: Long) = Action(BodyParsers.parse.json) { request =>
     val jsonReq = request.body
-    val contactRes = jsonReq.validate[Contact]
-    contactRes.fold(
+    val validEnt = jsonReq.validate[Contact]
+    validEnt.fold(
       errors =>
         BadRequest(Json.obj("status" -> "KO")), //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       uz => {
         val curResult = Contact.find(id)
         if (curResult.isDefined) {
           val curJson = curResult.get.toJSON.as[JsObject]
-          val updatedcontact = curJson.deepMerge(jsonReq.as[JsObject]).validate[Contact]
-          updatedcontact.get.id = id
-          Contact.update(updatedcontact.get)
-          Ok(Json.obj("status" -> "OK", "id" -> id))
+          val updatedEnt = curJson.deepMerge(jsonReq.as[JsObject]).validate[Contact]
+          if (updatedEnt.isSuccess) {
+            updatedEnt.get.id = id
+            Contact.update(updatedEnt.get)
+            Ok(Json.obj("status" -> "OK", "id" -> id))
+          } else
+            BadRequest(Json.obj("status" -> "KO"))
         } else
-          BadRequest(Json.obj("status" -> "NF")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+          BadRequest(Json.obj("status" -> "NF"))
       }
     )
   }

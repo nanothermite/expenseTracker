@@ -75,7 +75,7 @@ object Member extends Dao(classOf[Member]) {
 
   def apply(email: String,fname: String,lname: String,phone_number: Option[String],`type`: String,
             street1: Option[String],street2: Option[String],city: Option[String],state: Option[String],country: String,joined_date: Date,
-            ip: String,zip: String,userid: Option[String]): Member = {
+            ip: String,zip: String, userid: Option[String]): Member = {
     val member = new Member
     member.email = email
     member.fname = fname
@@ -207,6 +207,7 @@ class Member extends BaseObject {
       "street2" -> jsonNullCheck(street2),
       "city" -> jsonNullCheck(city),
       "state" -> jsonNullCheck(state),
+      "ip" -> jsonNullCheck(ip),
       "zip" -> jsonNullCheck(zip),
       "phone_number" -> jsonNullCheck(phone_number),
       "country" -> jsonNullCheck(country),
