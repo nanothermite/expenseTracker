@@ -15,7 +15,7 @@ object ProcessXLS {
 
   def parseRow(row: Row): BaseObject = {
     val rowSz = row.size
-    Contact.apply(None, None, None, None, None, None)
+    Contact.empty
   }
 
   def readFile(xlsFile: File, uploadType: String) = {

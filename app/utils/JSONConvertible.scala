@@ -1,7 +1,6 @@
 package utils
 
-import argonaut.Argonaut._
-import argonaut._
+import play.api.libs.json._
 import org.joda.time.DateTime
 
 /**
@@ -9,23 +8,21 @@ import org.joda.time.DateTime
  */
 trait JSONConvertible {
 
-  def toJSON: Json
+  def toJSON: JsValue
 
   def asJSON(elt: Option[Any]) = elt match {
-    case Some(value: Int)             => jNumber(value)
-    case Some(value: Double)          => jNumber(value)
-    case Some(value: String)          => jString(value)
-    case Some(value: DateTime)        => jString(DateFormatter.formatDateTime(value))
+    case Some(value: Int)             => Json.toJson(value)
+    case Some(value: Double)          => Json.toJson(value)
+    case Some(value: String)          => Json.toJson(value)
+    case Some(value: DateTime)        => Json.toJson(DateFormatter.formatDateTime(value))
     case Some(value: JSONConvertible) => value.toJSON
-    case Some(value: Any)             => jString(value.toString)
-    case None                         => jNull
+    case Some(value: Any)             => Json.toJson(value.toString)
+    case None                         => JsNull
   }
 
   def asJSON(elts: Iterable[JSONConvertible]) = elts.map(_.toJSON)
 
-  def jsonNullCheck(obj: String): Json =
-    if (obj != null) jString(obj) else jNull
+  def jsonNullCheck(obj: String) = if (obj != null) Json.toJson(obj) else JsNull
 
-  def jsonNullCheck(obj: Double): Json =
-    if (obj != null) jNumber(obj) else jNull
+  def jsonNullCheck(obj: Double) = if (obj != null) Json.toJson(obj) else JsNull
 }

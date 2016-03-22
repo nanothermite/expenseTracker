@@ -2,18 +2,14 @@ package controllers
 
 import java.nio.charset.Charset
 import java.util.Date
-import _root_.common.{Shared, BaseObject, ExtraJsonHelpers, myTypes}
-
-import argonaut.Argonaut._
-import argonaut._
+import _root_.common.{BaseObject, ExtraJsonHelpers, Shared, myTypes}
 import com.avaje.ebean._
 import entities._
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{JsPath, JsValue, Reads}
+import play.api.libs.json.{JsPath, JsValue, Reads, _}
 import play.api.mvc._
 import shade.memcached.Memcached
 import utils.Sha256
-
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -125,15 +121,15 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * @tparam T  generic
    * @return
    */
-  def genJson[T: TypeTag : ClassTag](colOrder: Array[String], outputPage: List[T]): Json = {
-    var jRows: ArrayBuffer[Json] = new ArrayBuffer[Json](outputPage.length)
+  def genJson[T: TypeTag : ClassTag](colOrder: Array[String], outputPage: List[T]): JsValue = {
+    var jRows: ArrayBuffer[JsValue] = new ArrayBuffer[JsValue](outputPage.length)
     val newRow =
       for {
         agg <- outputPage
-        jRowBuf: List[Json] = jsonByReflection[T](colOrder, m, agg)
-      } yield Json.obj("vals" -> jArray(jRowBuf.toList))
+        jRowBuf: List[JsValue] = jsonByReflection[T](colOrder, m, agg)
+      } yield Json.obj("vals" -> JsArray(jRowBuf.toList))
     jRows ++= newRow
-    val jRowsList: Json = jArray(jRows.toList)
+    val jRowsList: JsValue = JsArray(jRows.toList)
     Json.obj("data" -> jRowsList)
   }
 
@@ -166,18 +162,18 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     im.reflectMethod(methodX)
   }
 
-  def mirrorObjMatch[T : TypeTag : ClassTag](obj : Any) : Json =
+  def mirrorObjMatch[T : TypeTag : ClassTag](obj : Any) : JsValue =
     obj match {
-      case _: String => jString(obj.toString)
-      case _: Double => jNumber(obj.asInstanceOf[Double])
-      case _: Long => jNumber(obj.asInstanceOf[Long])
-      case _: Integer => jNumber(obj.asInstanceOf[Integer].toDouble)
-      case _: Date => jString(obj.asInstanceOf[Date].formatted("MM/dd/yyyy"))
-      case _: Any => jString("")
+      case _: String => Json.toJson(obj.toString)
+      case _: Double => Json.toJson(obj.asInstanceOf[Double])
+      case _: Long => Json.toJson(obj.asInstanceOf[Long])
+      case _: Integer => Json.toJson(obj.asInstanceOf[Integer].toDouble)
+      case _: Date => Json.toJson(obj.asInstanceOf[Date].formatted("MM/dd/yyyy"))
+      case _: Any => Json.toJson("")
     }
 
-  def jsonByReflection[T : TypeTag : ClassTag](colOrder: Array[String], m: ru.Mirror, agg: T): List[Json] = {
-    val jRowBuf = new ListBuffer[Json]()
+  def jsonByReflection[T : TypeTag : ClassTag](colOrder: Array[String], m: ru.Mirror, agg: T): List[JsValue] = {
+    val jRowBuf = new ListBuffer[JsValue]()
     val myType = getType(agg)
     val newRow =
       for {
@@ -186,7 +182,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
         im = m.reflect[T](agg)(getClassTag(agg))
         fieldMirror = im.reflectField(fieldTermSymb)
         obj = fieldMirror.get
-    } yield  { if (Option(obj).isEmpty) jString("") else mirrorObjMatch(obj) }
+    } yield  { if (Option(obj).isEmpty) Json.toJson("") else mirrorObjMatch(obj) }
     jRowBuf ++=  newRow
     jRowBuf.toList
   }
@@ -220,17 +216,15 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
         pList += "userid" -> uid
 
         val aggList: List[Aggregates] = getList("allq", byMonthsql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
-        val json: Json =
+        val json: JsValue =
           if (aggList.nonEmpty) {
-            val result = jArray(aggList.map(_.toJSON))
-            setSeq(key, result.nospaces)
+            val result = JsArray(aggList.map(_.toJSON))
+            setSeq(key, result.toString())
             result
           } else
-            Json.obj("result" -> jString("none"))
+            Json.obj("result" -> "none")
       Ok(json)
-      case Some(i: String) =>
-        val iJson = Parse.parseOption(i)
-        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+      case Some(i: String) => Ok(Json.parse(i))
       case t: Any => Ok("broke")
     }
   }
@@ -257,17 +251,17 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
         pList += "userid" -> uid
 
         val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
-        val json: Json =
+        val json: JsValue =
           if (aggList.nonEmpty) {
-            val result = jArray(aggList.map(_.toJSON))
-            setSeq(key, result.nospaces)
+            val result = JsArray(aggList.map(_.toJSON))
+            setSeq(key, result.toString())
             result
           } else
-            Json.obj("result" -> jString("none"))
+            Json.obj("result" -> "none")
         Ok(json)
       case Some(i: String) =>
-        val iJson = Parse.parseOption(i)
-        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+        val iJson = Json.parse(i)
+        Ok(iJson)
       case t: Any => Ok("broke")
     }
   }
@@ -294,18 +288,16 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
         pList += "userid" -> uid
 
         val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
-        val retJson: Json =
+        val retJson: JsValue =
           if (aggList.nonEmpty) {
-            val result = jArray(aggList.map(_.toJSON))
+            val result = JsArray(aggList.map(_.toJSON))
             //val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]])
-            setSeq(key, result.nospaces)
+            setSeq(key, result.toString())
             result
           } else
-            Json.obj("result" -> jString("none"))
+            Json.obj("result" -> "none")
         Ok(retJson)
-      case Some(i: String) =>
-        val iJson = Parse.parseOption(i)
-        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+      case Some(i: String) => Ok(Json.parse(i))
       case t: AnyRef => Ok("broke")
     }
   }
@@ -336,22 +328,20 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
         pList += "email" -> email
 
         val aggList = getList("allq", byEmailsql, colMap, pList, EmailUser).asInstanceOf[List[EmailUser]]
-        val retJson: Json =
+        val retJson: JsValue =
           if (aggList.nonEmpty) {
-            val result = jArray(aggList.map(_.toJSON))
-            setSeq(key, result.nospaces)
+            val result = JsArray(aggList.map(_.toJSON))
+            setSeq(key, result.toString())
             result
           } else
-            Json.obj("result" -> jString("none"))
+            Json.obj("result" -> "none")
         Ok(retJson)
-      case Some(i: String) =>
-        val iJson = Parse.parseOption(i)
-        Ok(if (iJson.nonEmpty)iJson.get else jNull)
+      case Some(i: String) => Ok(Json.parse(i))
       case t: AnyRef => Ok("broke")
     }
   }
 
-  def ranSession = (1 to 50).map(_ => r.nextPrintableChar).mkString("")
+  def ranSession = (1 to 50).map(_ => r.nextPrintableChar()).mkString("")
 
   def validateUser(name: String, passwd: String) = Action {
     val isEmail = name.contains("@")
@@ -365,8 +355,8 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val membUser = pwdList.head.asInstanceOf[MemberUser]
     val pwdHash = if (pwdList.nonEmpty) membUser.password else ""
     val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
-    val jsRet = Json.jString(if (valid) "auth" else "denied")
-    Ok(Json.obj("access"->jsRet, "uid"-> Json.jNumber(if (valid) membUser.id else -1), "sessAuth" -> jString(ranSession)))
+    val jsRet = Json.toJson(if (valid) "auth" else "denied")
+    Ok(Json.obj("access"->jsRet, "uid"-> (if (valid) membUser.id else -1), "sessAuth" -> ranSession))
   }
 
   /**
@@ -430,9 +420,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val curResult = Uzer.find(userid)
     if (curResult.isDefined) {
       Uzer.delete(curResult.get)
-      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(userid)))
+      Ok(Json.obj("status" -> "OK", "id" -> userid))
     } else {
-      BadRequest(Json.obj("status" -> jString("NF")))
+      BadRequest(Json.obj("status" -> "NF"))
     }
   }
 
@@ -445,9 +435,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val curResult = Member.find(memberid)
     if (curResult.isDefined) {
       Member.delete(curResult.get)
-      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(memberid)))
+      Ok(Json.obj("status" -> "OK", "id" -> memberid))
     } else {
-      BadRequest(Json.obj("status" -> jString("NF")))
+      BadRequest(Json.obj("status" -> "NF"))
     }
   }
 
@@ -460,9 +450,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val curResult = Contact.find(contactid)
     if (curResult.isDefined) {
       Contact.delete(curResult.get)
-      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contactid)))
+      Ok(Json.obj("status" -> "OK", "id" -> contactid))
     } else {
-      BadRequest(Json.obj("status" -> jString("NF")))
+      BadRequest(Json.obj("status" -> "NF"))
     }
   }
 
@@ -475,9 +465,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val curResult = Transactions.find(xactid)
     if (curResult.isDefined) {
       Transactions.delete(curResult.get)
-      Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(xactid)))
+      Ok(Json.obj("status" -> "OK", "id" -> xactid))
     } else {
-      BadRequest(Json.obj("status" -> jString("NF")))
+      BadRequest(Json.obj("status" -> "NF"))
     }
   }
 
@@ -503,12 +493,12 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val uzerRes = request.body.validate[Uzer]
     uzerRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> "KO")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val uzer = uzerRes.get
         Uzer.save(uzer)
-        Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(uzer.id)))
+        Ok(Json.obj("status" -> "OK", "id" -> uzer.id))
       }
     )
   }
@@ -523,7 +513,8 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
       (JsPath \ "phone").readNullable[String] and
       (JsPath \ "city").readNullable[String] and
       (JsPath \ "state").readNullable[String] and
-      (JsPath \ "identifier").readNullable[String]// and
+      (JsPath \ "identifier").readNullable[String] and
+      (JsPath \ "userid").readNullable[String]
     )(Contact.apply _)
 
   /**
@@ -536,7 +527,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val contactRes = request.body.validate[Contact]
     contactRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> "KO")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val contact = contactRes.get
@@ -546,9 +537,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           parent = parentResult.get
           contact.userid = parent
           Contact.save(contact)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contact.id)))
+          Ok(Json.obj("status" -> "OK", "id" -> contact.id))
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")))
+          BadRequest(Json.obj("status" -> "NF"))
         }
       }
     )
@@ -583,7 +574,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val memberRes = request.body.validate[Member]
     memberRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> "KO")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val member = memberRes.get
@@ -592,9 +583,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           val parent = parentResult.get
           member.uid = parent
           Member.save(member)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(member.id)))
+          Ok(Json.obj("status" -> "OK", "id" -> member.id))
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")))
+          BadRequest(Json.obj("status" -> "NF"))
         }
       }
     )
@@ -626,7 +617,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val transRes = request.body.validate[Transactions]
     transRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> "KO")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val trans = transRes.get
@@ -638,9 +629,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           trans.userid = parent
           trans.contact = contact
           Transactions.save(trans)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(trans.id)))
+          Ok(Json.obj("status" -> "OK", "id" -> trans.id))
         } else {
-          Ok(Json.obj("status" -> jString("KO")))
+          Ok(Json.obj("status" -> "KO"))
         }
       }
     )
@@ -658,9 +649,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           if (valOpt.isDefined) {
             (valOpt.get.toJSON, true)
           } else
-            (Json("badkey" -> jNumber(id)), false)
+            (Json.obj("badkey" -> id), false)
         if (valid)
-          setSeq(key, jSon.nospaces)
+          setSeq(key, jSon.toString())
         Ok(jSon)
   }
 
@@ -677,20 +668,19 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           processGet(id, key, Uzer.find(id))
         else {
           val objList = Uzer.all
-          val json: Json =
+          val json: JsValue =
             if (objList.get.nonEmpty) {
-              val result = jArray(objList.get.sortBy(_.id).map(_.toJSON))
-              setSeq(key, result.nospaces)
+              val result = JsArray(objList.get.sortBy(_.id).map(_.toJSON))
+              setSeq(key, result.toString())
               result
             } else {
-              Json.obj("result" -> jString("none"))
+              Json.obj("result" -> "none")
             }
           Ok(json)
         }
       case Some(i: String) =>
-        val iJson = Parse.parseOption(i)
-        Ok(if (iJson.nonEmpty)iJson.get else jNull)
-      case t: AnyRef => Ok(jString("broke"))
+        Ok(Json.parse(i))
+      case t: AnyRef => Ok("broke")
     }
   }
 
@@ -699,7 +689,8 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * @param id synth
    * @return
    */
-  def getContact(id: Long) = Action.async {
+  def getContact(id: Long) = Action.async(BodyParsers.parse.json) { request =>
+    val data = request.body
     val key = s"crud-contact-$id"
     getSeq(key).map {
       case None =>
@@ -707,20 +698,40 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           processGet(id, key, Contact.find(id))
         else {
           val objList = Contact.all
-          val json: Json =
+          val json: JsValue =
             if (objList.get.nonEmpty) {
-              val result = jArray(objList.get.sortBy(_.id).map(_.toJSON))
-              setSeq(key, result.nospaces)
+              val result = JsArray(objList.get.sortBy(_.id).map(_.toJSON))
+              setSeq(key, result.toString())
+              result
+            } else
+              Json.obj("result" -> "none")
+          Ok(json)
+        }
+      case Some(i: String) => Ok(Json.parse(i))
+      case t: AnyRef => Ok("broke")
+    }
+  }
+
+  def getContact2(id: Long) = Action.async {
+    val key = s"crud-contact-$id"
+    getSeq(key).map {
+      case None =>
+        if (id > 0)
+          processGet(id, key, Contact.find(id))
+        else {
+          val objList = Contact.all
+          val json: JsValue =
+            if (objList.get.nonEmpty) {
+              val result = JsArray(objList.get.sortBy(_.id).map(_.toJSON))
+              setSeq(key, result.toString())
               result
             } else {
-              Json.obj("result" -> jString("none"))
+              Json.obj("result" -> "none")
             }
           Ok(json)
         }
-      case Some(i: String) =>
-        val iJson = Parse.parseOption(i)
-        Ok(if (iJson.nonEmpty)iJson.get else jNull)
-      case t: AnyRef => Ok(jString("broke"))
+      case Some(i: String) => Ok(Json.parse(i))
+      case t: AnyRef => Ok("broke")
     }
   }
 
@@ -737,20 +748,18 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           processGet(id, key, Member.find(id))
         else {
           val objList = Member.all
-          val json: Json =
+          val json: JsValue =
             if (objList.get.nonEmpty) {
-              val result = jArray(objList.get.sortBy(_.id).map(_.toJSON))
-              setSeq(key, result.nospaces)
+              val result = JsArray(objList.get.sortBy(_.id).map(_.toJSON))
+              setSeq(key, result.toString())
               result
             } else {
-              Json.obj("result" -> jString("none"))
+              Json.obj("result" -> "none")
             }
           Ok(json)
         }
-      case Some(i: String) =>
-        val iJson = Parse.parseOption(i)
-        Ok(if (iJson.nonEmpty)iJson.get else jNull)
-      case t: AnyRef => Ok(jString("broke"))
+      case Some(i: String) => Ok(Json.parse(i))
+      case t: AnyRef => Ok("broke")
     }
   }
 
@@ -767,20 +776,18 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           processGet(id, key, Transactions.find(id))
         else {
           val objList = Transactions.all
-          val json: Json =
+          val json: JsValue =
             if (objList.get.nonEmpty) {
-              val result = jArray(objList.get.sortBy(_.id).map(_.toJSON))
-              setSeq(key, result.nospaces)
+              val result = JsArray(objList.get.sortBy(_.id).map(_.toJSON))
+              setSeq(key, result.toString())
               result
             } else {
-              Json.obj("result" -> jString("none"))
+              Json.obj("result" -> "none")
             }
           Ok(json)
         }
-      case Some(i: String) =>
-        val iJson = Parse.parseOption(i)
-        Ok(if (iJson.nonEmpty)iJson.get else jNull)
-      case t: AnyRef => Ok(jString("broke"))
+      case Some(i: String) => Ok(Json.parse(i))
+      case t: AnyRef => Ok("broke")
     }
   }
 
@@ -807,7 +814,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val uzerRes = request.body.validate[Uzer](uzerUpdateReads)
     uzerRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO")))
+        BadRequest(Json.obj("status" -> "KO"))
       },
       uz => {
         val newuzer = uzerRes.get
@@ -817,10 +824,10 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           newuzer.id = userid
           Uzer.update(newuzer)
           val jsonVal = curuzer.toJSON
-          setSeq(s"crud-user-$userid" ,jsonVal.nospaces)
+          setSeq(s"crud-user-$userid" ,jsonVal.toString())
           Ok(jsonVal)
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")))
+          BadRequest(Json.obj("status" -> "NF"))
         }
       }
     )
@@ -855,7 +862,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val memberRes = request.body.validate[Member](memberUpdateReads)
     memberRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> "KO")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val newmember = memberRes.get
@@ -864,9 +871,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           val curmember = curResult.get
           newmember.id = memberid
           Member.update(newmember)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(memberid)))
+          Ok(Json.obj("status" -> "OK", "id" -> memberid))
         } else {
-          BadRequest(Json.obj("status" -> jString("NF")))
+          BadRequest(Json.obj("status" -> "NF"))
         }
       }
     )
@@ -874,7 +881,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
 
   /**
    * update contact - nothing reqd
-   */
+   *
   val contactUpdateReads: Reads[Contact] = (
     //(JsPath \ "version").read[Integer] and
     (JsPath \ "bizname").readNullable[String] and
@@ -883,7 +890,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
       (JsPath \ "city").readNullable[String] and
       (JsPath \ "state").readNullable[String] and
       (JsPath \ "identifier").readNullable[String]
-    )(Contact.apply2 _)
+    )(Contact.apply2 _) */
 
   /**
    * update contact object
@@ -891,22 +898,23 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * @return
    */
   def updateContact(contactid: Long) = Action(BodyParsers.parse.json) { request =>
-    val contactRes = request.body.validate[Contact](contactUpdateReads)
+    //val trans = request.body.transform[Contact]
+    val contactRes = request.body.validate[Contact] //(contactUpdateReads)
+    val contactJson = request.body
     contactRes.fold(
-      errors => {
-        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
-      },
+      errors =>
+        BadRequest(Json.obj("status" -> "KO")), //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       uz => {
-        val newcontact = contactRes.get
         val curResult = Contact.find(contactid)
         if (curResult.isDefined) {
           val curcontact = curResult.get
-          newcontact.id = contactid
-          Contact.update(newcontact)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(contactid)))
-        } else {
-          BadRequest(Json.obj("status" -> jString("NF"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
-        }
+          val curJson = curcontact.toJSON
+          val updatedcontact = curJson.as[JsObject].deepMerge(contactJson.as[JsObject]).validate[Contact]
+          updatedcontact.get.id = contactid
+          Contact.update(updatedcontact.get)
+          Ok(Json.obj("status" -> "OK", "id" -> contactid))
+        } else
+          BadRequest(Json.obj("status" -> "NF")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       }
     )
   }
@@ -936,7 +944,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     val xactRes = request.body.validate[Transactions](transactionUpdateReads)
     xactRes.fold(
       errors => {
-        BadRequest(Json.obj("status" -> jString("KO"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+        BadRequest(Json.obj("status" -> "KO")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       },
       uz => {
         val newxact = xactRes.get
@@ -945,9 +953,9 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           val curxact = curResult.get         // needed for update below
           newxact.id = xactid
           Transactions.update(newxact)
-          Ok(Json.obj("status" -> jString("OK"), "id" -> jNumber(xactid)))
+          Ok(Json.obj("status" -> "OK", "id" -> xactid))
         } else {
-          BadRequest(Json.obj("status" -> jString("NF"))) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
+          BadRequest(Json.obj("status" -> "NF")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
         }
       }
     )

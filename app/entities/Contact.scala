@@ -2,12 +2,9 @@ package entities
 
 import java.util
 import javax.persistence._
-
-import argonaut.Argonaut._
-import argonaut._
+import play.api.libs.json._
 import com.avaje.ebean.RawSql
 import common.{BaseObject, Dao}
-
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -57,9 +54,9 @@ class Contact extends BaseObject {
     s
   }
 
-  def toJSON: Json = Json(
-    "id" -> jNumber(id),
-    "version" -> jString(version.toString),
+  def toJSON = Json.obj(
+    "id" -> id,
+    "version" -> (if (version == null) "" else version.toString),
     "bizname" -> jsonNullCheck(bizname),
     "industry" -> jsonNullCheck(industry),
     "phone" -> jsonNullCheck(phone),
@@ -104,39 +101,47 @@ object Contact extends Dao(classOf[Contact]) {
 
   def getReqd : Map[String, Integer] = Map()
 
-  def apply(/*version:Integer,*/ bizname:Option[String], industry:Option[String], phone:Option[String], city:Option[String], state:Option[String], identifier:Option[String]): Contact = {
+  def empty = apply(None, None, None, None, None, None, None)
+
+  def apply(/*version:Integer,*/ bizname:Option[String], industry:Option[String], phone:Option[String],
+            city:Option[String], state:Option[String], identifier:Option[String], userid: Option[String]): Contact = {
     val contact = new Contact
     //contact.version = version
-    if (bizname != None)
+    if (bizname.isDefined)
       contact.bizname = bizname.get
-    if (industry != None)
+    if (industry.isDefined)
       contact.industry = industry.get
-    if (phone != None)
+    if (phone.isDefined)
       contact.phone = phone.get
-    if (city != None)
+    if (city.isDefined)
       contact.city = city.get
-    if (state != None)
+    if (state.isDefined)
       contact.state = state.get
-    if (identifier != None)
+    if (identifier.isDefined)
       contact.identifier = identifier.get
+    if (userid.isDefined) {
+      val uzerIdOpt = Uzer.find(userid.get.toInt)
+      if (uzerIdOpt.isDefined) contact.userid = uzerIdOpt.get
+    }
     contact
   }
 
-  def apply2(/*version:Integer,*/ bizname:Option[String], industry:Option[String], phone:Option[String], city:Option[String], state:Option[String], identifier:Option[String]): Contact = {
+  /*def apply2(bizname:Option[String], industry:Option[String], phone:Option[String],
+                 city:Option[String], state:Option[String], identifier:Option[String]): Contact = {
     var contact = new Contact
     //contact.version = version
-    if (bizname != None)
+    if (bizname.isDefined)
       contact.bizname = bizname.get
-    if (industry != None)
+    if (industry.isDefined)
       contact.industry = industry.get
-    if (phone != None)
+    if (phone.isDefined)
       contact.phone = phone.get
-    if (city != None)
+    if (city.isDefined)
       contact.city = city.get
-    if (state != None)
+    if (state.isDefined)
       contact.state = state.get
-    if (identifier != None)
+    if (identifier.isDefined)
       contact.identifier = identifier.get
     contact
-  }
+  } */
 }

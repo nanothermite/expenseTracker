@@ -1,14 +1,11 @@
 package entities
 
 import javax.persistence._
-
-import argonaut.Argonaut._
-import argonaut._
+import play.api.libs.json._
 import com.avaje.ebean.RawSql
 import com.avaje.ebean.annotation.Sql
 import common.{BaseObject, Dao}
 import models._
-
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -23,12 +20,12 @@ class Aggregates extends BaseObject {
   var period: String = null
   var periodType:String = null
 
-  override def toJSON: Json =
-    Json(
-      "credit" -> (if (credit == null) jNull else jNumber(credit)),
-      "debit" -> (if (debit == null) jNull else jNumber(debit)),
-      "period" -> (if (period == null) jNull else jString(period)),
-      "period_type" -> (if (periodType == null) jNull else jString(periodType))
+  override def toJSON: JsValue =
+    Json.obj(
+      "credit" -> jsonNullCheck(credit),
+      "debit" -> jsonNullCheck(debit),
+      "period" -> jsonNullCheck(period),
+      "period_type" -> jsonNullCheck(periodType)
     )
 
 }
@@ -57,15 +54,6 @@ object Aggregates extends Dao(classOf[Aggregates]){
     if (resList.isEmpty)
       resList = new java.util.ArrayList[Aggregates]
     resList.asScala.toList
-  }
-
-  def create(credit:Double,debit:Double,period:String,periodType:String): Unit = {
-    val agg = new Aggregates
-    agg.credit = credit
-    agg.debit = debit
-    agg.period = period
-    agg.periodType = periodType
-    save(agg)
   }
 
   def toAggregate(agg: Aggregates): Aggregate =

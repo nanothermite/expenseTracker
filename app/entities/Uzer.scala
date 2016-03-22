@@ -4,15 +4,12 @@ import java.util
 import java.util.Date
 import javax.persistence._
 import javax.validation.constraints.{NotNull, Pattern}
-
-import argonaut.Argonaut._
-import argonaut._
+import play.api.libs.json._
 import com.avaje.ebean.RawSql
 import common.{BaseObject, Dao}
 import org.joda.time.DateTime
 import play.data.validation.Constraints
 import utils.DateFormatter
-
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -67,14 +64,13 @@ class Uzer extends BaseObject {
     s
   }
 
-  override def toJSON: Json =
-  Json(
-    "id" -> jNumber(id),
-    "username" -> jString(username),
-    "password" -> jString(password),
-    "role" -> jString(role),
+  override def toJSON = Json.obj(
+    "id" -> id,
+    "username" -> username,
+    "password" -> password,
+    "role" -> role,
     "nodata" -> jsonNullCheck(nodata),
-    "joined_date" -> jString(DateFormatter.formatDate(new DateTime(joined_date))),
+    "joined_date" -> DateFormatter.formatDate(new DateTime(joined_date)),
     "activation" -> jsonNullCheck(activation),
     "active_timestamp" -> jsonNullCheck(DateFormatter.formatDate(new DateTime(active_timestamp))),
     "active" -> jsonNullCheck(active)

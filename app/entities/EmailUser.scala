@@ -3,16 +3,13 @@ package entities
 import java.util.Date
 import javax.persistence._
 import javax.validation.constraints.{NotNull, Pattern}
-
-import argonaut.Argonaut._
-import argonaut._
+import play.api.libs.json._
 import com.avaje.ebean.RawSql
 import com.avaje.ebean.annotation.Sql
 import common.{BaseObject, Dao}
 import org.joda.time.DateTime
 import play.data.validation.Constraints
 import utils.DateFormatter
-
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -24,7 +21,7 @@ import scala.collection.JavaConverters._
 class EmailUser extends BaseObject {
   var id: Long = 0l
 
-  @Pattern(regexp = "[A-Za-z0-9 ]*", message = "must contain only letters, digits and spaces")
+  @Pattern(regexp = "[A-Za-z0- ]*", message = "must contain only letters, digits and spaces")
   @Constraints.MinLength(8)
   @Column
   var username: String = null
@@ -49,16 +46,15 @@ class EmailUser extends BaseObject {
 
   var active: String = null
 
-  override def toJSON: Json =
-    Json(
-      "id" -> jNumber(id),
-      "username" -> jString(username),
-      "password" -> jString(password),
-      "role" -> jString(role),
-      "joined_date" -> jString(DateFormatter.formatDate(new DateTime(joined_date))),
+  override def toJSON: JsValue = Json.obj(
+      "id" -> id,
+      "username" -> username,
+      "password" -> password,
+      "role" -> role,
+      "joined_date" -> DateFormatter.formatDate(new DateTime(joined_date)),
       "activation" -> jsonNullCheck(activation),
       "active_timestamp" -> jsonNullCheck(DateFormatter.formatDate(new DateTime(active_timestamp))),
-      "active" -> jString(active)
+      "active" -> active
   )
 }
 
@@ -77,7 +73,7 @@ object EmailUser extends Dao(classOf[EmailUser]){
    */
   def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[EmailUser] = {
     val q = EmailUser.find
-    if (!pList.isEmpty)
+    if (pList.isDefined)
       for ((k:String,v:Object) <- pList.get) {
         q.setParameter(k, v)
       }

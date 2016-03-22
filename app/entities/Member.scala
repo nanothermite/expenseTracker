@@ -3,14 +3,11 @@ package entities
 import java.util.Date
 import javax.persistence._
 import javax.validation.constraints.{Digits, NotNull, Pattern, Size}
-
-import argonaut.Argonaut._
-import argonaut._
+import play.api.libs.json._
 import com.avaje.ebean.RawSql
 import common.{BaseObject, Dao}
 import org.joda.time.DateTime
 import utils.DateFormatter
-
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -198,14 +195,14 @@ class Member extends BaseObject {
     s
   }
 
-  override def toJSON: Json =
-    Json(
-      "id" -> jNumber(id),
-      "email" -> jString(email),
-      "fname" -> jString(fname),
-      "lname" -> jString(lname),
+  override def toJSON =
+    Json.obj(
+      "id" -> id,
+      "email" -> email,
+      "fname" -> fname,
+      "lname" -> lname,
       "userid" -> jsonNullCheck(userid),
-      "type" -> jString(`type`),
+      "type" -> `type`,
       "street1" -> jsonNullCheck(street1),
       "street2" -> jsonNullCheck(street2),
       "city" -> jsonNullCheck(city),

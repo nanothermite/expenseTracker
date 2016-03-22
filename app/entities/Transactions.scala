@@ -2,15 +2,12 @@ package entities
 
 import java.util.Date
 import javax.persistence._
-
-import argonaut.Argonaut._
-import argonaut._
+import play.api.libs.json._
 import com.avaje.ebean.RawSql
 import common.{BaseObject, Dao}
 import org.joda.time.DateTime
 import play.data.validation.Constraints
 import utils.DateFormatter
-
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -173,9 +170,9 @@ class Transactions extends BaseObject {
     s
   }
 
-  def toJSON: Json = Json(
-    "id" -> jNumber(id),
-    "trandate" -> jString(DateFormatter.formatDate(new DateTime(trandate))),
+  def toJSON = Json.obj(
+    "id" -> id,
+    "trandate" -> DateFormatter.formatDate(new DateTime(trandate)),
     "acct" -> jsonNullCheck(acct),
     "vendor" -> jsonNullCheck(vendor),
     "description" -> jsonNullCheck(description),
