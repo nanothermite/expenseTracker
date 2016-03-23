@@ -604,7 +604,8 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
       (JsPath \ "state").readNullable[String] and
       (JsPath \ "debit").readNullable[Double] and
       (JsPath \ "credit").readNullable[Double] and
-      (JsPath \ "trantype").readNullable[String]
+      (JsPath \ "trantype").readNullable[String] and
+      (JsPath \ "userid").read[Int]
     )(Transactions.apply _)
 
   /**
@@ -922,31 +923,34 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
       (JsPath \ "state").readNullable[String] and
       (JsPath \ "debit").readNullable[Double] and
       (JsPath \ "credit").readNullable[Double] and
-      (JsPath \ "trantype").readNullable[String]
+      (JsPath \ "trantype").readNullable[String] and
+      (JsPath \ "userid").readNullable[String]
     )(Transactions.apply2 _)
 
   /**
    * update transaction object
-   * @param xactid key
+   * @param id key
    * @return
    */
-  def updateTransaction(xactid: Long): Action[JsValue] = Action(BodyParsers.parse.json) { request =>
-    val xactRes = request.body.validate[Transactions](transactionUpdateReads)
-    xactRes.fold(
-      errors => {
-        BadRequest(Json.obj("status" -> "KO")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
-      },
+  def updateTransaction(id: Long): Action[JsValue] = Action(BodyParsers.parse.json) { request =>
+    val jsonReq = request.body
+    val validEnt = request.body.validate[Transactions](transactionUpdateReads)
+    validEnt.fold(
+      errors =>
+        BadRequest(Json.obj("status" -> "KO")), //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
       uz => {
-        val newxact = xactRes.get
-        val curResult = Transactions.find(xactid)
+        val curResult = Transactions.find(id)
         if (curResult.isDefined) {
-          val curxact = curResult.get         // needed for update below
-          newxact.id = xactid
-          Transactions.update(newxact)
-          Ok(Json.obj("status" -> "OK", "id" -> xactid))
-        } else {
+          val curJson = curResult.get.toJSON.as[JsObject]
+          val updatedEnt = curJson.deepMerge(jsonReq.as[JsObject]).validate[Transactions]
+          if (updatedEnt.isSuccess) {
+            updatedEnt.get.id = id
+            Transactions.update(updatedEnt.get)
+            Ok(Json.obj("status" -> "OK", "id" -> id))
+          } else
+            BadRequest(Json.obj("status" -> "KO"))
+        } else
           BadRequest(Json.obj("status" -> "NF")) //, "message" -> play.api.libs.json.JsError.toFlatJson(errors)))
-        }
       }
     )
   }

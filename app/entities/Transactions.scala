@@ -74,7 +74,7 @@ object Transactions extends Dao(classOf[Transactions]) {
 
   def apply(trandate: Date,acct: Option[String],vendor: Option[String],
             description: Option[String],phone: Option[String],city: Option[String],state: Option[String],
-            debit: Option[Double],credit: Option[Double], trantype: Option[String]): Transactions = {
+            debit: Option[Double],credit: Option[Double], trantype: Option[String], userid: Int): Transactions = {
     val trans = new Transactions
     trans.trandate = trandate
     if (acct.isDefined)
@@ -95,12 +95,13 @@ object Transactions extends Dao(classOf[Transactions]) {
       trans.credit = credit.get
     if (trantype.isDefined)
       trans.trantype = trantype.get
+    trans.userid = Uzer.find(userid).get
     trans
   }
 
   def apply2(trandate: Option[Date],acct: Option[String],vendor: Option[String],
             description: Option[String],phone: Option[String],city: Option[String],state: Option[String],
-            debit: Option[Double],credit: Option[Double], trantype: Option[String]): Transactions = {
+            debit: Option[Double],credit: Option[Double], trantype: Option[String], userid: Option[String]): Transactions = {
     val trans = new Transactions
     if (trandate.isDefined)
       trans.trandate = trandate.get
@@ -122,6 +123,8 @@ object Transactions extends Dao(classOf[Transactions]) {
       trans.credit = credit.get
     if (trantype.isDefined)
       trans.trantype = trantype.get
+    if (userid.isDefined)
+      trans.userid = Uzer.find(userid.get.toInt).get
     trans
   }
 }
@@ -181,6 +184,7 @@ class Transactions extends BaseObject {
     "state" -> jsonNullCheck(state),
     "debit" -> jsonNullCheck(debit),
     "credit" -> jsonNullCheck(credit),
-    "trantype" -> jsonNullCheck(trantype)
+    "trantype" -> jsonNullCheck(trantype),
+    "userid" -> jsonNullCheck(userid.id)
   )
 }
