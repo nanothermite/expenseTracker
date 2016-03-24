@@ -67,13 +67,19 @@ class Contact extends BaseObject {
 }
 
 object Contact extends Dao(classOf[Contact]) {
-  def all: Option[List[Contact]] =  {
-    val objList = Contact.find.findList
-    Some(if (objList.nonEmpty)
-      objList.asScala.toList
-    else
-      List.empty[Contact]
-    )
+  def all(userid: Long): Option[List[Contact]] = {
+    val uzer = Uzer.find(userid.toInt)
+    val objList =
+      if (uzer.isDefined) {
+        val objList = Contact.find.where.eq("userid", uzer.get).findList
+        if (objList.nonEmpty)
+          objList.asScala.toList
+        else
+          List.empty[Contact]
+      }
+      else
+        List.empty[Contact]
+    Some(objList)
   }
 
   def allq(sql:RawSql) : List[Contact] = {

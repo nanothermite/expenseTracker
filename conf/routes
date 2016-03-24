@@ -27,18 +27,18 @@ POST          /add/Xaction/:userid/:contactid        controllers.QueryController
 # find entities
 GET           /get/User                              controllers.QueryController.getUser(id: Long = 0)
 GET           /get/User/:id                          controllers.QueryController.getUser(id: Long)
-GET           /get/Contact                           controllers.QueryController.getContact(id: Long = 0)
-GET           /get/Contact/:id                       controllers.QueryController.getContact(id: Long)
-GET           /get/Member                            controllers.QueryController.getMember(id: Long = 0)
-GET           /get/Member/:id                        controllers.QueryController.getMember(id: Long)
-GET           /get/Xaction                           controllers.QueryController.getTransactions(id: Long = 0)
-GET           /get/Xaction/:id                       controllers.QueryController.getTransactions(id: Long)
+GET           /get/Contact/all/:userid               controllers.QueryController.getContact(id: Long = 0, userid: Long)
+GET           /get/Contact/:id/:userid               controllers.QueryController.getContact(id: Long, userid: Long)
+GET           /get/Member/all/:userid                controllers.QueryController.getMember(id: Long = 0, userid: Long)
+GET           /get/Member/:id/:userid                controllers.QueryController.getMember(id: Long, userid: Long)
+GET           /get/Xaction/all/:userid               controllers.QueryController.getTransactions(id: Long = 0, userid: Long)
+GET           /get/Xaction/:id/:userid               controllers.QueryController.getTransactions(id: Long, userid: Long)
 
 # update existing objects
 POST          /update/User/:userid                   controllers.QueryController.updateUser(userid: Long)
-POST          /update/Member/:memberid               controllers.QueryController.updateMember(memberid: Long)
-POST          /update/Contact/:contactid             controllers.QueryController.updateContact(contactid: Long)
-POST          /update/Xaction/:xactid                controllers.QueryController.updateTransaction(xactid: Long)
+POST          /update/Member/:memberid/:userid       controllers.QueryController.updateMember(memberid: Long, userid: Long)
+POST          /update/Contact/:contactid/:userid     controllers.QueryController.updateContact(contactid: Long, userid: Long)
+POST          /update/Xaction/:xactid/:userid        controllers.QueryController.updateTransaction(xactid: Long, userid: Long)
 POST          /uploadFile                            controllers.UploadController.uploadFile
 
 # drop existing objects

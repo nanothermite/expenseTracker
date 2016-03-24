@@ -15,13 +15,19 @@ import scala.collection.JavaConverters._
  * Created by hkatz on 3/21/15.
  */
 object Member extends Dao(classOf[Member]) {
-  def all: Option[List[Member]] =  {
-    val objList = Member.find.findList
-    Some(if (objList.nonEmpty)
-      objList.asScala.toList
-    else
-      List.empty[Member]
-    )
+  def all(userid: Long): Option[List[Member]] =  {
+    val uzer = Uzer.find(userid.toInt)
+    val objList =
+      if (uzer.isDefined) {
+        val objList = Member.find.where.eq("uid", uzer.get).findList
+        if (objList.nonEmpty)
+          objList.asScala.toList
+        else
+          List.empty[Member]
+      }
+      else
+        List.empty[Member]
+    Some(objList)
   }
 
   def allq(sql:RawSql) : List[Member] = {
@@ -201,7 +207,7 @@ class Member extends BaseObject {
       "email" -> email,
       "fname" -> fname,
       "lname" -> lname,
-      "userid" -> jsonNullCheck(userid),
+      "userid" -> jsonNullCheck(uid.id),
       "type" -> `type`,
       "street1" -> jsonNullCheck(street1),
       "street2" -> jsonNullCheck(street2),

@@ -20,13 +20,19 @@ object Transactions extends Dao(classOf[Transactions]) {
   val byQuarter = "byQuarter"
   val year = "year"
 
-  def all: Option[List[Transactions]] = {
-    val objList = Transactions.find.findList
-    Some(if (objList.nonEmpty)
-      objList.asScala.toList
-    else
-      List.empty[Transactions]
-    )
+  def all(userid: Long): Option[List[Transactions]] = {
+    val uzer = Uzer.find(userid.toInt)
+    val objList =
+      if (uzer.isDefined) {
+        val objList = Transactions.find.where.eq("userid", uzer.get).findList
+        if (objList.nonEmpty)
+          objList.asScala.toList
+        else
+          List.empty[Transactions]
+      }
+      else
+        List.empty[Transactions]
+    Some(objList)
   }
 
   def allq(sql:RawSql) : List[Transactions] = {

@@ -690,15 +690,14 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * @param id synth
    * @return
    */
-  def getContact(id: Long) = Action.async(BodyParsers.parse.json) { request =>
-    val data = request.body
-    val key = s"crud-contact-$id"
+  def getContact(id: Long, userid: Long) = Action.async {
+    val key = s"crud-contact-$id-$userid"
     getSeq(key).map {
       case None =>
         if (id > 0)
           processGet(id, key, Contact.find(id))
         else {
-          val objList = Contact.all
+          val objList = Contact.all(userid)
           val json: JsValue =
             if (objList.get.nonEmpty) {
               val result = JsArray(objList.get.sortBy(_.id).map(_.toJSON))
@@ -713,42 +712,19 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     }
   }
 
-  def getContact2(id: Long) = Action.async {
-    val key = s"crud-contact-$id"
-    getSeq(key).map {
-      case None =>
-        if (id > 0)
-          processGet(id, key, Contact.find(id))
-        else {
-          val objList = Contact.all
-          val json: JsValue =
-            if (objList.get.nonEmpty) {
-              val result = JsArray(objList.get.sortBy(_.id).map(_.toJSON))
-              setSeq(key, result.toString())
-              result
-            } else {
-              Json.obj("result" -> "none")
-            }
-          Ok(json)
-        }
-      case Some(i: String) => Ok(Json.parse(i))
-      case t: AnyRef => Ok("broke")
-    }
-  }
-
   /**
    * from crud operations - get Member entity
    * @param id synth
    * @return
    */
-  def getMember(id: Long) = Action.async {
-    val key = s"crud-member-$id"
+  def getMember(id: Long, userid: Long) = Action.async {
+    val key = s"crud-member-$id-$userid"
     getSeq(key).map {
       case None =>
         if (id > 0)
           processGet(id, key, Member.find(id))
         else {
-          val objList = Member.all
+          val objList = Member.all(userid)
           val json: JsValue =
             if (objList.get.nonEmpty) {
               val result = JsArray(objList.get.sortBy(_.id).map(_.toJSON))
@@ -769,14 +745,14 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * @param id synth
    * @return
    */
-  def getTransactions(id: Long) = Action.async {
-    val key = s"crud-xaction-$id"
+  def getTransactions(id: Long, userid: Long) = Action.async {
+    val key = s"crud-xaction-$id-$userid"
     getSeq(key).map {
       case None =>
         if (id > 0)
           processGet(id, key, Transactions.find(id))
         else {
-          val objList = Transactions.all
+          val objList = Transactions.all(userid)
           val json: JsValue =
             if (objList.get.nonEmpty) {
               val result = JsArray(objList.get.sortBy(_.id).map(_.toJSON))
@@ -859,7 +835,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * @param id key
    * @return
    */
-  def updateMember(id: Long) = Action(BodyParsers.parse.json) { request =>
+  def updateMember(id: Long, userid: Long) = Action(BodyParsers.parse.json) { request =>
     val jsonReq = request.body
     val validEnt = jsonReq.validate[Member](memberUpdateReads)
     validEnt.fold(
@@ -887,7 +863,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * @param id key
    * @return
    */
-  def updateContact(id: Long) = Action(BodyParsers.parse.json) { request =>
+  def updateContact(id: Long, userid: Long) = Action(BodyParsers.parse.json) { request =>
     val jsonReq = request.body
     val validEnt = jsonReq.validate[Contact]
     validEnt.fold(
@@ -932,7 +908,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * @param id key
    * @return
    */
-  def updateTransaction(id: Long): Action[JsValue] = Action(BodyParsers.parse.json) { request =>
+  def updateTransaction(id: Long, userid: Long): Action[JsValue] = Action(BodyParsers.parse.json) { request =>
     val jsonReq = request.body
     val validEnt = request.body.validate[Transactions](transactionUpdateReads)
     validEnt.fold(
