@@ -849,6 +849,8 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           if (updatedEnt.isSuccess) {
             updatedEnt.get.id = id
             Member.update(updatedEnt.get)
+            delSeq(s"crud-member-0-$userid")
+            delSeq(s"crud-member-$id-$userid")
             Ok(Json.obj("status" -> "OK", "id" -> id))
           } else
             BadRequest(Json.obj("status" -> "KO"))
@@ -877,6 +879,8 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           if (updatedEnt.isSuccess) {
             updatedEnt.get.id = id
             Contact.update(updatedEnt.get)
+            delSeq(s"crud-contact-0-$userid")
+            delSeq(s"crud-contact-$id-$userid")
             Ok(Json.obj("status" -> "OK", "id" -> id))
           } else
             BadRequest(Json.obj("status" -> "KO"))
@@ -922,6 +926,8 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
           if (updatedEnt.isSuccess) {
             updatedEnt.get.id = id
             Transactions.update(updatedEnt.get)
+            delSeq(s"crud-xaction-0-$userid")
+            delSeq(s"crud-xaction-$id-$userid")
             Ok(Json.obj("status" -> "OK", "id" -> id))
           } else
             BadRequest(Json.obj("status" -> "KO"))
