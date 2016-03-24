@@ -42,7 +42,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
   val byQuartersql = "select sum(s.credit) as credit, " +
     "sum(s.debit) as debit, " +
     "cast(extract(quarter from s.trandate) as bigint) as period, " +
-    " 'N' as periodType " +
+    " 'Q' as periodType " +
     "from Transactions s " +
     "where extract(year from s.trandate) = :year and " +
     "s.userid = :userid " +
@@ -281,7 +281,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
         colMap = collection.mutable.Map("sum(s.credit)" -> "credit",
           "sum(s.debit)" -> "debit",
           "cast(extract(quarter from s.trandate) as bigint)" -> "period",
-          "'N'" -> "periodType")
+          "'Q'" -> "periodType")
 
         pList.clear()
         pList += "year" -> year
