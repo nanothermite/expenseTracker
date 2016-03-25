@@ -7,7 +7,7 @@ import com.avaje.ebean.RawSql
 import common.{BaseObject, Dao}
 import org.joda.time.DateTime
 import play.data.validation.Constraints
-import utils.DateFormatter
+import utils.{DateUtils, DateFormatter}
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -195,11 +195,25 @@ object Transactions extends Dao(classOf[Transactions]) {
     trans
   }
 
-  def findBiz(biz: String, userid: Int): List[Transactions] = {
-    val query = createQuery(classOf[Transactions],
-      s"select bizname, id from Contact where userid = $userid and bizname = $biz"
-    )
-    val bizList = query.findList.asScala.toList
-    bizList
+  def apply3(strs: List[String])(implicit uzer: Uzer): Transactions = {
+    val userid = uzer.id.toInt
+    val trandate = DateUtils.dateParse(strs(0), DateUtils.YMD).toDate
+    strs.size match {
+      case 1 => apply(trandate, None, None, None, None, None, None, None, None, None, userid)
+      case 2 => apply(trandate, Some(strs(1)), None, None, None, None, None, None, None, None, userid)
+      case 3 => apply(trandate, Some(strs(1)), Some(strs(2)), None, None, None, None, None, None, None, userid)
+      case 4 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), None, None, None, None, None, None, userid)
+      case 5 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), None, None, None, None, None, userid)
+      case 6 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), None, None, None, None, userid)
+      case 7 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(strs(6)), None, None, None, userid)
+      case 8 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(strs(6)), Some(strs(7).toDouble), None, None, userid)
+      case 9 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(strs(6)), Some(strs(7).toDouble), Some(strs(8).toDouble), None, userid)
+      case 10 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(strs(6)), Some(strs(7).toDouble), Some(strs(8).toDouble), Some(strs(9)), userid)
+    }
   }
+
+  def findBiz(vendor: String)(implicit uzer: Uzer): List[Transactions] =
+    find.where.
+    eq("userid", uzer).
+    eq("vendor", vendor).findList.asScala.toList
 }

@@ -132,14 +132,21 @@ object Contact extends Dao(classOf[Contact]) {
     contact
   }
 
-  def findBiz(biz: String, userid: Int): List[Contact] = {
-    val uzer = Uzer.find(userid.toInt)
-    if (uzer.isDefined) {
-      val bizList = find.where.
-        eq("userid", uzer.get).
-        eq("bizname", biz).findList.asScala.toList
-      bizList
-    } else
-      List.empty[Contact]
+  def apply2(strs: List[String])(implicit uzer: Uzer): Contact = {
+    val userid = uzer.id.toString
+    strs.size match {
+      case 1 => apply(Some(strs(0)), None, None, None, None, None, Some(userid))
+      case 2 => apply(Some(strs(0)), Some(strs(1)), None, None, None, None, Some(userid))
+      case 3 => apply(Some(strs(0)), Some(strs(1)), Some(strs(2)), None, None, None, Some(userid))
+      case 4 => apply(Some(strs(0)), Some(strs(1)), Some(strs(2)), Some(strs(3)), None, None, Some(userid))
+      case 5 => apply(Some(strs(0)), Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), None, Some(userid))
+      case 6 => apply(Some(strs(0)), Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(userid))
+      case 7 => apply(Some(strs(0)), Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(userid))
+    }
   }
+
+  def findBiz(biz: String)(implicit uzer: Uzer): List[Contact] =
+      find.where.
+        eq("userid", uzer).
+        eq("bizname", biz).findList.asScala.toList
 }

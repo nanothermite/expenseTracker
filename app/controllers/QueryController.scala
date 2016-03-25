@@ -510,7 +510,6 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
    * almost all nullable
    */
   implicit val contactReads: Reads[Contact] = (
-    //(JsPath \ "version").read[Integer] and
       (JsPath \ "bizname").readNullable[String] and
       (JsPath \ "industry").readNullable[String] and
       (JsPath \ "phone").readNullable[String] and

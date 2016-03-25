@@ -1,11 +1,9 @@
 package xls
 
 import java.io.File
-
 import common.BaseObject
-import entities.{Transactions, Contact}
+import entities.{Contact, Transactions, Uzer}
 import org.apache.poi.ss.usermodel._
-import utils.DateUtils
 import scala.collection.JavaConversions._
 
 /**
@@ -14,12 +12,18 @@ import scala.collection.JavaConversions._
 
 object ProcessXLS {
 
+  case class counter(var adds: Int, var dups: Int)
+  object counter {
+    def empty = counter(0, 0)
+  }
+
   def parseRow(row: Row): BaseObject = {
     val rowSz = row.size
     Contact.empty
   }
 
-  def readFile(xlsFile: File, userid: Int, uploadType: String) = {
+  def readFile(xlsFile: File, uzer: Uzer, uploadType: String): counter = {
+    implicit val uz = uzer
     val wb = WorkbookFactory.create(xlsFile)
 
     def getCellString(cell: Cell) = {
@@ -46,45 +50,36 @@ object ProcessXLS {
         nCells = cells.size
         obj = uploadType match {
           case "C" =>
-            Contact.apply(Some(cells(0)),
-              if (nCells > 1) Some(cells(1)) else None,
-              if (nCells > 2) Some(cells(2)) else None,
-              if (nCells > 3) Some(cells(3)) else None,
-              if (nCells > 4) Some(cells(4)) else None,
-              if (nCells > 5) Some(cells(5)) else None,
-              Some(userid.toString))
+            Contact.apply2(cells)
           case "E" =>
-            val trandate = DateUtils.dateParse(cells(0), DateUtils.YMD)
-            Transactions.apply(trandate.toDate,
-              if (nCells > 1) Some(cells(1)) else None,
-              if (nCells > 2) Some(cells(2)) else None,
-              if (nCells > 3) Some(cells(3)) else None,
-              if (nCells > 4) Some(cells(4)) else None,
-              if (nCells > 5) Some(cells(5)) else None,
-              if (nCells > 6) Some(cells(6)) else None,
-              if (nCells > 7) Some(cells(7).toDouble) else None,
-              if (nCells > 8) Some(cells(8).toDouble) else None,
-              if (nCells > 9) Some(cells(9)) else None,
-              userid)
+            Transactions.apply3(cells)
         }
       } yield obj
     }.toList.tail  // drop header line
+
+    val counts = counter.empty
 
     types.foreach { baseobj =>
       uploadType match {
         case "C" =>
           val myContact = baseobj.asInstanceOf[Contact]
-          val matched = Contact.findBiz(myContact.bizname, userid)
-          if (matched.isEmpty) Contact.save(myContact)
+          val matched = Contact.findBiz(myContact.bizname)
+          if (matched.isEmpty) {
+            Contact.save(myContact)
+            counts.adds = counts.adds + 1
+          } else
+            counts.dups = counts.dups + 1
         case "E" =>
           val myTrans = baseobj.asInstanceOf[Transactions]
-          val matched = Transactions.findBiz(myTrans.trantype, userid)
-          if (matched.isEmpty) Transactions.save(myTrans)
+          val matched = Transactions.findBiz(myTrans.trantype)
+          if (matched.isEmpty) {
+            Transactions.save(myTrans)
+            counts.adds = counts.adds + 1
+          } else
+            counts.dups = counts.dups + 1
       }
     }
-    val text = sheet.rowIterator.map { row: Row =>
-      row.cellIterator.map(getCellString).mkString("|")
-    }.mkString("\n")
+    counts
   }
 
 }

@@ -9,6 +9,7 @@ import akka.util.Timeout
 import argonaut.Argonaut._
 import argonaut._
 import common.{ExtraJsonHelpers, Shared, myTypes}
+import entities.Uzer
 import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc._
@@ -40,8 +41,8 @@ class UploadController @Inject() (system: ActorSystem) extends Controller with m
           val savedName = s"$randname-$filename"
           val fileNode = new File(s"/tmp/$savedName.upload")
           picture.ref.moveTo(fileNode)
-          val userId = 9 // this will come from an actor that hold the server side credentials
-          (xlsActor ? XLSName(uploadType, savedName, userId, fileNode)).mapTo[String].map { message: String =>
+          val uzerOpt = Uzer.find(9) // this will come from an actor that hold the server side credentials
+          (xlsActor ? XLSName(uploadType, savedName, uzerOpt.get, fileNode)).mapTo[String].map { message: String =>
             Logger.debug(s"got $uploadType")
             Logger.debug(message)
           }
