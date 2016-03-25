@@ -40,7 +40,8 @@ class UploadController @Inject() (system: ActorSystem) extends Controller with m
           val savedName = s"$randname-$filename"
           val fileNode = new File(s"/tmp/$savedName.upload")
           picture.ref.moveTo(fileNode)
-          (xlsActor ? XLSName(uploadType, savedName, fileNode)).mapTo[String].map { message: String =>
+          val userId = 9 // this will come from an actor that hold the server side credentials
+          (xlsActor ? XLSName(uploadType, savedName, userId, fileNode)).mapTo[String].map { message: String =>
             Logger.debug(s"got $uploadType")
             Logger.debug(message)
           }

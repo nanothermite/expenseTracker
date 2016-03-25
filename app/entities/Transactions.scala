@@ -14,6 +14,65 @@ import scala.collection.JavaConverters._
 /**
  * Created by hkatz on 9/5/14.
  */
+@Entity
+class Transactions extends BaseObject {
+  @Id
+  @GeneratedValue(strategy=GenerationType.AUTO)
+  var id: Long = 0l
+
+  @Constraints.Required
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "contact")
+  var contact: Contact = null
+
+  @Constraints.Required
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "userid")
+  var userid: Uzer = null
+
+  @Constraints.Required
+  var trandate: Date = null
+
+  var acct: String = null
+
+  var vendor: String = null
+
+  var description: String = null
+
+  var phone: String = null
+
+  var city: String = null
+
+  var state: String = null
+
+  var debit: java.lang.Double = 0d
+
+  var credit: java.lang.Double = 0d
+
+  var trantype: String = null
+
+  override def toString : String =  {
+    var s = ""
+    if (id != 0l && userid != null)
+      s = f"$id%d - $userid"
+    s
+  }
+
+  def toJSON = Json.obj(
+    "id" -> id,
+    "trandate" -> DateFormatter.formatDate(new DateTime(trandate)),
+    "acct" -> jsonNullCheck(acct),
+    "vendor" -> jsonNullCheck(vendor),
+    "description" -> jsonNullCheck(description),
+    "phone" -> jsonNullCheck(phone),
+    "city" -> jsonNullCheck(city),
+    "state" -> jsonNullCheck(state),
+    "debit" -> jsonNullCheck(debit),
+    "credit" -> jsonNullCheck(credit),
+    "trantype" -> jsonNullCheck(trantype),
+    "userid" -> jsonNullCheck(userid.id)
+  )
+}
 
 object Transactions extends Dao(classOf[Transactions]) {
   val byMonth = "byMonth"
@@ -78,6 +137,8 @@ object Transactions extends Dao(classOf[Transactions]) {
     save(trans)
   }
 
+  def empty = apply(null, None, None, None, None, None, None, None, None, None, 0)
+
   def apply(trandate: Date,acct: Option[String],vendor: Option[String],
             description: Option[String],phone: Option[String],city: Option[String],state: Option[String],
             debit: Option[Double],credit: Option[Double], trantype: Option[String], userid: Int): Transactions = {
@@ -133,64 +194,12 @@ object Transactions extends Dao(classOf[Transactions]) {
       trans.userid = Uzer.find(userid.get.toInt).get
     trans
   }
-}
 
-@Entity
-class Transactions extends BaseObject {
-  @Id
-  @GeneratedValue(strategy=GenerationType.AUTO)
-  var id: Long = 0l
-
-  @Constraints.Required
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "contact")
-  var contact: Contact = null
-
-  @Constraints.Required
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "userid")
-  var userid: Uzer = null
-
-  @Constraints.Required
-  var trandate: Date = null
-
-  var acct: String = null
-
-  var vendor: String = null
-
-  var description: String = null
-
-  var phone: String = null
-
-  var city: String = null
-
-  var state: String = null
-
-  var debit: java.lang.Double = 0d
-
-  var credit: java.lang.Double = 0d
-
-  var trantype: String = null
-
-  override def toString : String =  {
-    var s = ""
-    if (id != 0l && userid != null)
-      s = f"$id%d - $userid"
-    s
+  def findBiz(biz: String, userid: Int): List[Transactions] = {
+    val query = createQuery(classOf[Transactions],
+      s"select bizname, id from Contact where userid = $userid and bizname = $biz"
+    )
+    val bizList = query.findList.asScala.toList
+    bizList
   }
-
-  def toJSON = Json.obj(
-    "id" -> id,
-    "trandate" -> DateFormatter.formatDate(new DateTime(trandate)),
-    "acct" -> jsonNullCheck(acct),
-    "vendor" -> jsonNullCheck(vendor),
-    "description" -> jsonNullCheck(description),
-    "phone" -> jsonNullCheck(phone),
-    "city" -> jsonNullCheck(city),
-    "state" -> jsonNullCheck(state),
-    "debit" -> jsonNullCheck(debit),
-    "credit" -> jsonNullCheck(credit),
-    "trantype" -> jsonNullCheck(trantype),
-    "userid" -> jsonNullCheck(userid.id)
-  )
 }

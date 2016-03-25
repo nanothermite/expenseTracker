@@ -352,11 +352,14 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
     pList += (if (isEmail) "email" -> name else "username" -> name)
 
     val pwdList = getList("allq", if (isEmail) validateEmailSql else validateUserSql, colMap, pList, MemberUser)
-    val membUser = pwdList.head.asInstanceOf[MemberUser]
-    val pwdHash = if (pwdList.nonEmpty) membUser.password else ""
-    val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
-    val jsRet = Json.toJson(if (valid) "auth" else "denied")
-    Ok(Json.obj("access"->jsRet, "uid"-> (if (valid) membUser.id else -1), "sessAuth" -> ranSession))
+    if (pwdList.nonEmpty) {
+      val membUser = pwdList.head.asInstanceOf[MemberUser]
+      val pwdHash = membUser.password
+      val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
+      Ok(Json.obj("access" -> "auth", "uid" -> (if (valid) membUser.id else -1), "sessAuth" -> ranSession))
+    } else {
+      Ok(Json.obj("access" -> "denied"))
+    }
   }
 
   /**

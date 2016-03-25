@@ -109,7 +109,7 @@ object Contact extends Dao(classOf[Contact]) {
 
   def empty = apply(None, None, None, None, None, None, None)
 
-  def apply(/*version:Integer,*/ bizname:Option[String], industry:Option[String], phone:Option[String],
+  def apply(bizname:Option[String], industry:Option[String], phone:Option[String],
             city:Option[String], state:Option[String], identifier:Option[String], userid: Option[String]): Contact = {
     val contact = new Contact
     //contact.version = version
@@ -132,22 +132,14 @@ object Contact extends Dao(classOf[Contact]) {
     contact
   }
 
-  /*def apply2(bizname:Option[String], industry:Option[String], phone:Option[String],
-                 city:Option[String], state:Option[String], identifier:Option[String]): Contact = {
-    var contact = new Contact
-    //contact.version = version
-    if (bizname.isDefined)
-      contact.bizname = bizname.get
-    if (industry.isDefined)
-      contact.industry = industry.get
-    if (phone.isDefined)
-      contact.phone = phone.get
-    if (city.isDefined)
-      contact.city = city.get
-    if (state.isDefined)
-      contact.state = state.get
-    if (identifier.isDefined)
-      contact.identifier = identifier.get
-    contact
-  } */
+  def findBiz(biz: String, userid: Int): List[Contact] = {
+    val uzer = Uzer.find(userid.toInt)
+    if (uzer.isDefined) {
+      val bizList = find.where.
+        eq("userid", uzer.get).
+        eq("bizname", biz).findList.asScala.toList
+      bizList
+    } else
+      List.empty[Contact]
+  }
 }

@@ -9,7 +9,7 @@ import xls.ProcessXLS
 /**
  * Created by hkatz on 3/15/16.
  */
-case class XLSName(uploadType: String, name: String, file: File)
+case class XLSName(uploadType: String, name: String, userid: Int, file: File)
 
 object XLSActor {
   private val statusMap = new ConcurrentHashMap[File, Boolean]()
@@ -23,9 +23,9 @@ object XLSActor {
 class XLSActor extends Actor with ActorLogging {
 
   override def receive: Receive = {
-    case XLSName(uploadType: String, name: String, file: File) =>
+    case XLSName(uploadType: String, name: String, userid: Int, file: File) =>
       XLSActor.putStatusState(file, false)
-      ProcessXLS.readFile(file, uploadType)
+      ProcessXLS.readFile(file, userid, uploadType)
       sender() ! s"got $name now"
   }
 }
