@@ -35,15 +35,7 @@ class Transactions extends BaseObject {
 
   var acct: String = null
 
-  var vendor: String = null
-
   var description: String = null
-
-  var phone: String = null
-
-  var city: String = null
-
-  var state: String = null
 
   var debit: java.lang.Double = 0d
 
@@ -62,11 +54,7 @@ class Transactions extends BaseObject {
     "id" -> id,
     "trandate" -> DateFormatter.formatDate(new DateTime(trandate)),
     "acct" -> jsonNullCheck(acct),
-    "vendor" -> jsonNullCheck(vendor),
     "description" -> jsonNullCheck(description),
-    "phone" -> jsonNullCheck(phone),
-    "city" -> jsonNullCheck(city),
-    "state" -> jsonNullCheck(state),
     "debit" -> jsonNullCheck(debit),
     "credit" -> jsonNullCheck(credit),
     "trantype" -> jsonNullCheck(trantype),
@@ -100,17 +88,12 @@ object Transactions extends Dao(classOf[Transactions]) {
     q.findList().asScala.toList
   }
 
-  def getColOrder: List[String] = List("id","trandate","acct","vendor","description","phone","city",
-    "state","debit","credit","trantype","contact","userid")
+  def getColOrder: List[String] = List("id","trandate","acct","description","debit","credit","trantype","contact","userid")
 
   def getMetas: Map[String, Class[_]] = Map(
     "trandate" -> classOf[Date],
     "acct" -> classOf[String],
-    "vendor" -> classOf[String],
     "description" -> classOf[String],
-    "phone" -> classOf[String],
-    "city" -> classOf[String],
-    "state" -> classOf[String],
     "debit" -> classOf[Double],
     "credit" -> classOf[Double],
     "trantype" -> classOf[String]
@@ -118,44 +101,16 @@ object Transactions extends Dao(classOf[Transactions]) {
 
   def getReqd: Map[String, Integer] = Map("trandate" -> 1)
 
-  def create(id: Long,contact: Contact,userid: Uzer,trandate: Date,acct: String,vendor: String,
-             description: String,phone: String,city: String,state: String,debit: Double,credit: Double,
-             trantype: String): Unit = {
-    val trans = new Transactions
-    trans.id = id
-    trans.contact = contact
-    trans.userid = userid
-    trans.trandate = trandate
-    trans.acct = acct
-    trans.vendor = vendor
-    trans.description = description
-    trans.city = city
-    trans.state = state
-    trans.debit = debit
-    trans.credit = credit
-    trans.trantype = trantype
-    save(trans)
-  }
+  def empty = apply(null, None, None, None, None, None, /* None, None, None, None, */ 0)
 
-  def empty = apply(null, None, None, None, None, None, None, None, None, None, 0)
-
-  def apply(trandate: Date,acct: Option[String],vendor: Option[String],
-            description: Option[String],phone: Option[String],city: Option[String],state: Option[String],
+  def apply(trandate: Date,acct: Option[String], description: Option[String],
             debit: Option[Double],credit: Option[Double], trantype: Option[String], userid: Int): Transactions = {
     val trans = new Transactions
     trans.trandate = trandate
     if (acct.isDefined)
       trans.acct = acct.get
-    if (vendor.isDefined)
-    trans.vendor = vendor.get
     if (description.isDefined)
       trans.description = description.get
-    if (phone.isDefined)
-    trans.phone = phone.get
-    if (city.isDefined)
-      trans.city = city.get
-    if (state.isDefined)
-      trans.state = state.get
     if (debit.isDefined)
       trans.debit = debit.get
     if (credit.isDefined)
@@ -166,24 +121,15 @@ object Transactions extends Dao(classOf[Transactions]) {
     trans
   }
 
-  def apply2(trandate: Option[Date],acct: Option[String],vendor: Option[String],
-            description: Option[String],phone: Option[String],city: Option[String],state: Option[String],
+  def apply2(trandate: Option[Date],acct: Option[String], description: Option[String],
             debit: Option[Double],credit: Option[Double], trantype: Option[String], userid: Option[String]): Transactions = {
     val trans = new Transactions
     if (trandate.isDefined)
       trans.trandate = trandate.get
     if (acct.isDefined)
       trans.acct = acct.get
-    if (vendor.isDefined)
-      trans.vendor = vendor.get
     if (description.isDefined)
       trans.description = description.get
-    if (phone.isDefined)
-      trans.phone = phone.get
-    if (city.isDefined)
-      trans.city = city.get
-    if (state.isDefined)
-      trans.state = state.get
     if (debit.isDefined)
       trans.debit = debit.get
     if (credit.isDefined)
@@ -197,23 +143,24 @@ object Transactions extends Dao(classOf[Transactions]) {
 
   def apply3(strs: List[String])(implicit uzer: Uzer): Transactions = {
     val userid = uzer.id.toInt
-    val trandate = DateUtils.dateParse(strs(0), DateUtils.YMD).toDate
+    val trandate = DateUtils.dateParse(strs.head, DateUtils.YMD).toDate
     strs.size match {
-      case 1 => apply(trandate, None, None, None, None, None, None, None, None, None, userid)
-      case 2 => apply(trandate, Some(strs(1)), None, None, None, None, None, None, None, None, userid)
-      case 3 => apply(trandate, Some(strs(1)), Some(strs(2)), None, None, None, None, None, None, None, userid)
-      case 4 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), None, None, None, None, None, None, userid)
-      case 5 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), None, None, None, None, None, userid)
-      case 6 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), None, None, None, None, userid)
-      case 7 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(strs(6)), None, None, None, userid)
-      case 8 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(strs(6)), Some(strs(7).toDouble), None, None, userid)
-      case 9 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(strs(6)), Some(strs(7).toDouble), Some(strs(8).toDouble), None, userid)
-      case 10 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3)), Some(strs(4)), Some(strs(5)), Some(strs(6)), Some(strs(7).toDouble), Some(strs(8).toDouble), Some(strs(9)), userid)
+      case 1 => apply(trandate, None, None, None, None, None, userid)
+      case 2 => apply(trandate, Some(strs(1)), None, None, None, None, userid)
+      case 3 => apply(trandate, Some(strs(1)), Some(strs(2)), None, None, None, userid)
+      case 4 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3).toDouble), None, None, userid)
+      case 5 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3).toDouble), Some(strs(4).toDouble), None, userid)
+      case 6 => apply(trandate, Some(strs(1)), Some(strs(2)), Some(strs(3).toDouble), Some(strs(4).toDouble), Some(strs(5)), userid)
     }
   }
 
-  def findBiz(vendor: String)(implicit uzer: Uzer): List[Transactions] =
-    find.where.
-    eq("userid", uzer).
-    eq("vendor", vendor).findList.asScala.toList
+  def findBiz(vendor: String)(implicit uzer: Uzer): List[Transactions] = {
+    val contacts = Contact.find.where.eq("userid", uzer).eq("vendor", vendor).findList.asScala.toList
+    if (contacts.nonEmpty && contacts.size == 1) {
+      find.where.
+        eq("userid", uzer).
+        eq("contact", contacts.head).findList.asScala.toList
+    } else
+      List.empty[Transactions]
+  }
 }

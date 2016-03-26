@@ -2,7 +2,7 @@ package xls
 
 import java.io.File
 import common.BaseObject
-import entities.{Contact, Transactions, Uzer}
+import entities.{TransactionsXLS, Contact, Transactions, Uzer}
 import org.apache.poi.ss.usermodel._
 import scala.collection.JavaConversions._
 
@@ -12,10 +12,7 @@ import scala.collection.JavaConversions._
 
 object ProcessXLS {
 
-  case class counter(var adds: Int, var dups: Int)
-  object counter {
-    def empty = counter(0, 0)
-  }
+  case class counter(adds: Int, dups: Int)
 
   def parseRow(row: Row): BaseObject = {
     val rowSz = row.size
@@ -40,46 +37,60 @@ object ProcessXLS {
     }
 
     val sheet = wb.getSheetAt(0)
-
-    val rows = sheet.rowIterator.size
+    val cellRange = Range(0, uploadType match {
+      case "C" => 6
+      case "E" => 7
+    }).toList.iterator
 
     val types:List[BaseObject] = {
       for {
-        row <- sheet.rowIterator()
-        cells = row.cellIterator.map(getCellString).toList
+        row <- sheet.rowIterator().toList.tail
+        cells = cellRange.map { cellNdx =>
+          val cellVal = row.getCell(cellNdx)
+          if (cellVal != null) getCellString(cellVal) else " "
+        }.toList
         nCells = cells.size
         obj = uploadType match {
           case "C" =>
             Contact.apply2(cells)
           case "E" =>
-            Transactions.apply3(cells)
+            TransactionsXLS.apply(cells)
         }
       } yield obj
-    }.toList.tail  // drop header line
-
-    val counts = counter.empty
-
-    types.foreach { baseobj =>
-      uploadType match {
-        case "C" =>
-          val myContact = baseobj.asInstanceOf[Contact]
-          val matched = Contact.findBiz(myContact.bizname)
-          if (matched.isEmpty) {
-            Contact.save(myContact)
-            counts.adds = counts.adds + 1
-          } else
-            counts.dups = counts.dups + 1
-        case "E" =>
-          val myTrans = baseobj.asInstanceOf[Transactions]
-          val matched = Transactions.findBiz(myTrans.trantype)
-          if (matched.isEmpty) {
-            Transactions.save(myTrans)
-            counts.adds = counts.adds + 1
-          } else
-            counts.dups = counts.dups + 1
-      }
     }
-    counts
+
+    val stats: List[Boolean] =
+      types.map { baseobj =>
+        uploadType match {
+          case "C" =>
+            val myContact = baseobj.asInstanceOf[Contact]
+            val matched = Contact.findBiz(myContact.bizname)
+            if (matched.isEmpty) {
+              Contact.save(myContact)
+              true
+            } else
+              false
+          case "E" =>
+            val myTrans = baseobj.asInstanceOf[TransactionsXLS]
+            val (matched, contact) = TransactionsXLS.findBiz(myTrans.vendor)
+            if (matched.isEmpty) {
+              implicit val cont = contact
+              Transactions.save(TransactionsXLS.apply4(myTrans))
+              true
+            } else
+              false
+        }
+      }
+    val groupedStats = stats.groupBy(identity).mapValues(_.size)
+    counter(
+      if (groupedStats contains true)
+        groupedStats(true)
+      else
+        0,
+      if (groupedStats contains false)
+        groupedStats(false)
+      else
+        0)
   }
 
 }

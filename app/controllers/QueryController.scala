@@ -599,11 +599,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
   implicit val transactionReads: Reads[Transactions] = (
     (JsPath \ "trandate").read[Date] and
       (JsPath \ "acct").readNullable[String] and
-      (JsPath \ "vendor").readNullable[String] and
       (JsPath \ "description").readNullable[String] and
-      (JsPath \ "phone").readNullable[String] and
-      (JsPath \ "city").readNullable[String] and
-      (JsPath \ "state").readNullable[String] and
       (JsPath \ "debit").readNullable[Double] and
       (JsPath \ "credit").readNullable[Double] and
       (JsPath \ "trantype").readNullable[String] and
@@ -898,11 +894,7 @@ class QueryController extends Controller with myTypes with Sha256 with ExtraJson
   val transactionUpdateReads: Reads[Transactions] = (
     (JsPath \ "trandate").readNullable[Date] and
       (JsPath \ "acct").readNullable[String] and
-      (JsPath \ "vendor").readNullable[String] and
       (JsPath \ "description").readNullable[String] and
-      (JsPath \ "phone").readNullable[String] and
-      (JsPath \ "city").readNullable[String] and
-      (JsPath \ "state").readNullable[String] and
       (JsPath \ "debit").readNullable[Double] and
       (JsPath \ "credit").readNullable[Double] and
       (JsPath \ "trantype").readNullable[String] and
