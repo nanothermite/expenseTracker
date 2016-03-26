@@ -72,7 +72,7 @@ object ProcessXLS {
               false
           case "E" =>
             val myTrans = baseobj.asInstanceOf[TransactionsXLS]
-            val (matched, contact) = TransactionsXLS.findBiz(myTrans.vendor)
+            val (matched, contact) = TransactionsXLS.findBiz(myTrans)
             if (matched.isEmpty) {
               implicit val cont = contact
               Transactions.save(TransactionsXLS.apply4(myTrans))
