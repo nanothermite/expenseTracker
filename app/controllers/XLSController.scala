@@ -12,9 +12,10 @@ import scala.io.Source
  * Created by hkatz on 3/26/16.
  */
 class XLSController extends Controller {
+  val URLBASE = "http://wengen/DOWNLOAD"
+  val codecType = "ISO-8859-1"
 
   def sendTemplate(tempType: String) = Action {
-    val URLBASE = "http://wengen/DOWNLOAD"
     val (templateContent, tempName) =
       try {
         val tempFile = tempType match {
@@ -22,20 +23,16 @@ class XLSController extends Controller {
           case "E" => "expenses_template.xls"
           case "_" => "BAD"
         }
-        implicit val codec = scala.io.Codec("ISO-8859-1")
-
+        implicit val codec = scala.io.Codec(codecType)
         codec.onMalformedInput(CodingErrorAction.IGNORE)
         codec.onUnmappableCharacter(CodingErrorAction.IGNORE)
-        val data = Source.fromURL(s"${URLBASE}/$tempFile")
-        val asStr = data.mkString
-        (asStr, tempFile)
+        (Source.fromURL(s"${URLBASE}/$tempFile").mkString, tempFile)
       } catch {
         case e: java.nio.charset.MalformedInputException =>
           (s"template not found ${e.printStackTrace}", "BAD")
         case e: java.io.IOException =>
           (s"template not found ${e.printStackTrace}", "BAD")
       }
-    val tempEnum = Enumerator(templateContent.toCharArray.map(_.toByte))
     if (tempName == "BAD")
       Ok(Json.obj("request" -> "incorrect type"))
     else
@@ -44,8 +41,8 @@ class XLSController extends Controller {
           Map(
             CONTENT_LENGTH -> templateContent.size.toString,
             CONTENT_DISPOSITION -> s"attachment; filename=$tempName"
-          )) ,
-        body = tempEnum
+          )),
+        body = Enumerator(templateContent.toCharArray.map(_.toByte))
       )
   }
 }
