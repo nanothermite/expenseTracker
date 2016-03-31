@@ -14,8 +14,8 @@
   -->
     <logger name="play" level="INFO" />
     <logger name="application" level="DEBUG" />
-    <logger name="com.avaje" level="DEBUG" />
-    <logger name="com.jolbox" level="DEBUG" />
+    <logger name="com.avaje" level="INFO" />
+    <logger name="com.jolbox" level="INFO" />
 
   <root level="ERROR">
     <appender-ref ref="STDOUT" />
