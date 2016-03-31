@@ -18,47 +18,55 @@ import scala.concurrent.duration._
 @RunWith(classOf[JUnitRunner])
 class ApplicationSpec extends Specification {
 
-  val getUserUrl = "http://berne:8880/expense/get/User/9"
+  val getSingleUserUrl = "http://berne:8880/expense/get/User/9"
+  val validateUserUrl = "http://berne:8880/expense/valid/User/johngalt/12345678"
+  val waitTime = 700.milli
+  implicit val uzerReads = Json.reads[Uzer]
+  implicit val authReads = Json.reads[Access]
 
   case class Uzer(activation: String, active: String, active_timestamp: String, id: Int, joined_date: String,
                   nodata: String, password: String, role: String, username: String)
 
+  case class Access(access: String, sessAuth: String, uid: Int)
+
   "Application" should {
 
-    /*"send 404 on a bad request" in new WithApplication{
-      val testRet = FakeRequest(GET, "/boum", FakeHeaders() ,body = "", remoteAddress = "wengen:8880")
-      route(testRet).get mustNotEqual beNone
-    }*/
-
-    "render the index page" in new WithApplication{
-      implicit val personReads = Json.reads[Uzer]
-      val wsRespF: Future[WSResponse] = WS.url(getUserUrl).get()
+    "obtain single user record" in new WithApplication{
+      val wsRespF: Future[WSResponse] = WS.url(getSingleUserUrl).get()
       val resultF: Future[JsResult[Uzer]] = wsRespF.map {
         response =>
             response.json.validate[Uzer]
-          //(response.json \ "username").as[String]
       }
-      val wsResp = Await.result(wsRespF.mapTo[WSResponse].map { resp => resp}, 5.milli)
-      val uzerJS = Await.result(resultF, 700.milli)
+      val wsResp = Await.result(wsRespF.mapTo[WSResponse].map { resp => resp}, waitTime)
+      val uzerJS = Await.result(resultF, waitTime)
 
-      val (uzer, valid) = uzerJS match {
-        case u: JsSuccess[Uzer] => (u.get, true)
-        case e: JsError => (e.get, false)
+      uzerJS match {
+        case u: JsSuccess[Uzer] => u.get.username must equalTo("johngalt")
+        case e: JsError => "bad return" must equalTo("johngalt")
       }
-
       val contentType = wsResp.header("content-type")
-
       if (contentType.isDefined)
-        contentType.get.split(";")(0) must equalTo("application/json")
-
-      if (valid)
-        uzer.username must equalTo("johngalt")
+        contentType.get.split(";").head must equalTo("application/json")
       wsResp.status must equalTo(OK)
+    }
 
-      //val home = route(FakeRequest(GET, "/expense/get/User/9", FakeHeaders(), body = "", remoteAddress = "wengen:8880")).get
+    "validate user access" in new WithApplication{
+      val wsRespF: Future[WSResponse] = WS.url(validateUserUrl).get()
+      val resultF: Future[JsResult[Access]] = wsRespF.map {
+        response =>
+          response.json.validate[Access]
+      }
+      val wsResp = Await.result(wsRespF.mapTo[WSResponse].map { resp => resp}, waitTime)
+      val authJS = Await.result(resultF, waitTime)
 
-      //contentType(home) must beSome.which(_ == "application/json")
-      //contentAsString(home) must contain ("activation")
+      authJS match {
+        case u: JsSuccess[Access] => u.get.access must equalTo("auth")
+        case e: JsError => "bad return" must equalTo("auth")
+      }
+      val contentType = wsResp.header("content-type")
+      if (contentType.isDefined)
+        contentType.get.split(";").head must equalTo("application/json")
+      wsResp.status must equalTo(OK)
     }
   }
 }

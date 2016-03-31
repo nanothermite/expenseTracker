@@ -1,0 +1,9 @@
+#!/bin/bash
+
+HTTPS_PORT=8443
+APPLICATION_SECRET=`date | md5sum` \
+CACHEDHOST=berne:11211 \
+DATABASE_URL=jdbc:postgresql://berne/expense_dev \
+DATABASE_USER=biz \
+DATABASE_PWD=bts1ebtm \
+activator -jvm-debug 9998 test-only ApplicationSpec -Dconfig.file=conf/application.conf
