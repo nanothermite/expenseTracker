@@ -6,18 +6,17 @@ import actors.{XLSActor, XLSName}
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
-import argonaut.Argonaut._
-import argonaut._
-import common.{ExtraJsonHelpers, Shared, myTypes}
+import common.{Shared, myTypes}
 import entities.Uzer
 import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import play.api.libs.json._
 import play.api.mvc._
 
 import scala.concurrent.duration._
 
 @Singleton
-class UploadController @Inject() (system: ActorSystem) extends Controller with myTypes with ExtraJsonHelpers {
+class UploadController @Inject() (system: ActorSystem) extends Controller with myTypes {
 
   implicit val timeout: Timeout = 5.seconds
 
@@ -25,9 +24,9 @@ class UploadController @Inject() (system: ActorSystem) extends Controller with m
 
   val xlsActor = system.actorOf(XLSActor.props, "xls-actor")
 
-  private def errorJson(reason: String): Json = Json.obj("error" -> jString(reason))
+  private def errorJson(reason: String) = Json.obj("error" -> reason)
 
-  private def successJson(reason: String): Json = Json.obj("id" -> jString(reason))
+  private def successJson(reason: String) = Json.obj("id" -> reason)
 
   def uploadFile = Action(parse.multipartFormData) { request =>
     val uploadType = request.body.dataParts("type").head

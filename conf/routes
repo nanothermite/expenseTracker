@@ -19,39 +19,40 @@ GET           /get/Years/:uid                           controllers.QueryControl
 GET           /valid/User/:userid/:pwd                  controllers.QueryController.validateUser(userid: String, pwd: String)
 
 # create objects
-POST          /add/User                                 controllers.QueryController.addUser
-POST          /add/Member/:userid                       controllers.QueryController.addMember(userid: Long)
-POST          /add/Contact/:userid                      controllers.QueryController.addContact(userid: Long)
-POST          /add/Xaction/:userid/:contactid           controllers.QueryController.addTransaction(userid: Long, contactid: Long)
+POST          /add/User                                 controllers.CrudController.addUser
+POST          /add/Member/:userid                       controllers.CrudController.addMember(userid: Long)
+POST          /add/Contact/:userid                      controllers.CrudController.addContact(userid: Long)
+POST          /add/Xaction/:userid/:contactid           controllers.CrudController.addTransaction(userid: Long, contactid: Long)
 
 # find entities
-GET           /get/User                                 controllers.QueryController.getUser(id: Long = 0)
-GET           /get/User/:id                             controllers.QueryController.getUser(id: Long)
-GET           /get/Contact/all/:userid                  controllers.QueryController.getContact(id: Long = 0, userid: Long)
-GET           /get/Contact/:id/:userid                  controllers.QueryController.getContact(id: Long, userid: Long)
-GET           /get/Member/all/:userid                   controllers.QueryController.getMember(id: Long = 0, userid: Long)
-GET           /get/Member/:id/:userid                   controllers.QueryController.getMember(id: Long, userid: Long)
-GET           /get/Xaction/all/:userid                  controllers.QueryController.getTransactions(id: Long = 0, userid: Long)
-GET           /get/Xaction/:id/:userid                  controllers.QueryController.getTransactions(id: Long, userid: Long)
+GET           /get/User                                 controllers.CrudController.getUser(id: Long = 0)
+GET           /get/User/:id                             controllers.CrudController.getUser(id: Long)
+GET           /get/Contact/all/:userid                  controllers.CrudController.getContact(id: Long = 0, userid: Long)
+GET           /get/Contact/:id/:userid                  controllers.CrudController.getContact(id: Long, userid: Long)
+GET           /get/Member/all/:userid                   controllers.CrudController.getMember(id: Long = 0, userid: Long)
+GET           /get/Member/:id/:userid                   controllers.CrudController.getMember(id: Long, userid: Long)
+GET           /get/Xaction/all/:userid                  controllers.CrudController.getTransactions(id: Long = 0, userid: Long)
+GET           /get/Xaction/:id/:userid                  controllers.CrudController.getTransactions(id: Long, userid: Long)
 
 # update existing objects
-POST          /update/User/:userid                      controllers.QueryController.updateUser(userid: Long)
-POST          /update/Member/:memberid/:userid          controllers.QueryController.updateMember(memberid: Long, userid: Long)
-POST          /update/Contact/:contactid/:userid        controllers.QueryController.updateContact(contactid: Long, userid: Long)
-POST          /update/Xaction/:xactid/:userid           controllers.QueryController.updateTransaction(xactid: Long, userid: Long)
+POST          /update/User/:userid                      controllers.CrudController.updateUser(userid: Long)
+POST          /update/Member/:memberid/:userid          controllers.CrudController.updateMember(memberid: Long, userid: Long)
+POST          /update/Contact/:contactid/:userid        controllers.CrudController.updateContact(contactid: Long, userid: Long)
+POST          /update/Xaction/:xactid/:userid           controllers.CrudController.updateTransaction(xactid: Long, userid: Long)
+
 POST          /uploadFile                               controllers.UploadController.uploadFile
 
 # template download
 GET           /get/Template/:tempType                   controllers.XLSController.sendTemplate(tempType: String)
 
 # drop existing objects
-DELETE        /drop/User/:userid                        controllers.QueryController.dropUser(userid: Long)
-DELETE        /drop/Member/:memberid                    controllers.QueryController.dropMember(memberid: Long)
-DELETE        /drop/Contact/:contactid                  controllers.QueryController.dropContact(contactid: Long)
-DELETE        /drop/Xaction/:xactid                     controllers.QueryController.dropTransaction(xactid: Long)
+DELETE        /drop/User/:userid                        controllers.CrudController.dropUser(userid: Long)
+DELETE        /drop/Member/:memberid                    controllers.CrudController.dropMember(memberid: Long)
+DELETE        /drop/Contact/:contactid                  controllers.CrudController.dropContact(contactid: Long)
+DELETE        /drop/Xaction/:xactid                     controllers.CrudController.dropTransaction(xactid: Long)
 
 # memcached ops
-GET           /mem/add/:k/:v                            controllers.QueryController.memadd(k: String, v: String)
-GET           /mem/set/:k/:v                            controllers.QueryController.memset(k: String, v: String)
-GET           /mem/get/:k                               controllers.QueryController.memget(k: String)
-GET           /mem/del/:k                               controllers.QueryController.memdrop(k: String)
+GET           /mem/add/:k/:v                            controllers.CacheController.memadd(k: String, v: String)
+GET           /mem/set/:k/:v                            controllers.CacheController.memset(k: String, v: String)
+GET           /mem/get/:k                               controllers.CacheController.memget(k: String)
+GET           /mem/del/:k                               controllers.CacheController.memdrop(k: String)
