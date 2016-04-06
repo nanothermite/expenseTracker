@@ -1,27 +1,19 @@
 package controllers
 
-import java.nio.charset.Charset
 import java.util.Date
 import javax.inject.Inject
 
 import _root_.common.{BaseObject, Shared, myTypes}
-import actors._
-import akka.pattern.ask
 import akka.actor.ActorSystem
-import akka.actor._
-import akka.util.Timeout
 import com.avaje.ebean._
 import entities._
-import play.api.Logger
 import play.api.libs.json.{JsValue, _}
 import play.api.mvc._
 import utils.Sha256
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
@@ -30,17 +22,12 @@ class QueryController @Inject() (system: ActorSystem) extends Controller with my
 
   val r = Shared.r
 
-  val secActor = system.actorOf(SecurityActor.props, "sec-actor")
-
   val m = ru.runtimeMirror(getClass.getClassLoader)
 
   var colOrder = Seq.empty[String] //new ArrayBuffer[String]()
   var colMap = scala.collection.mutable.Map[String, String]()
   var pList = new java.util.HashMap[String, Object]()
   val datePattern = "yyyy-MM-dd"
-
-  implicit val timeout: Timeout = 5.seconds
-  val waitTime = 700.milli
 
   val byMonthsql = "select sum(s.credit) as credit, " +
     "sum(s.debit) as debit, " +
@@ -83,14 +70,6 @@ class QueryController @Inject() (system: ActorSystem) extends Controller with my
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "u.username = :username"
-  val validateUserSql = "select u.password, u.id, m.fname " +
-    "from Member m, Uzer u " +
-    "where m.uid = u.id and " +
-    "u.username = :username"
-  val validateEmailSql = "select u.password, u.id, m.fname " +
-    "from Member m, Uzer u " +
-    "where m.uid = u.id and " +
-    "m.email = :email"
 
   def index = Action {
     Ok(views.html.index("Your new application is ready."))
@@ -349,64 +328,6 @@ class QueryController @Inject() (system: ActorSystem) extends Controller with my
       case Some(i: String) => Ok(Json.parse(i))
       case t: AnyRef => Ok("broke")
     }
-  }
-
-  def ranSession = (1 to 50).map(_ => r.nextPrintableChar()).mkString("")
-
-  def validateUser(name: String, passwd: String) = Action {
-    val isEmail = name.contains("@")
-    colMap.clear()
-    colMap += "u.password" -> "password"
-    colMap += "m.fname" -> "fname"
-
-    pList.clear()
-    pList += (if (isEmail) "email" -> name else "username" -> name)
-
-    val pwdList = getList("allq", if (isEmail) validateEmailSql else validateUserSql, colMap, pList, MemberUser)
-    if (pwdList.nonEmpty) {
-      val membUser = pwdList.head.asInstanceOf[MemberUser]
-      val pwdHash = membUser.password
-      val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
-      if (valid)
-        secActor ! InitSession(ranSession, membUser.id.toInt)
-      Ok(if (valid)
-        Json.obj("access" -> "auth", "uid" -> membUser.id, "welcome" -> membUser.fname, "sessAuth" -> ranSession)
-      else
-        Json.obj("access" -> "denied")
-      )
-    } else {
-      Ok(Json.obj("access" -> "denied"))
-    }
-  }
-
-  def invalidateUser(sessKey: String, checkid: Int) = Action {
-    val endedFuture =
-      (secActor ? CheckSession(sessKey)).mapTo[Int].map { uid: Int =>
-        Logger.debug(s"got $uid")
-        if (checkid == uid) {
-          secActor ! EndSession(sessKey)
-          true
-        } else
-          false
-    }
-    val ended = Await.result(endedFuture, waitTime)
-    Ok(Json.obj("status" ->
-      (if (ended) "loggedout" else "mismatched")))
-  }
-
-  def dumpMap = Action {
-    val dumpFuture =
-      (secActor ? DumpSessions).mapTo[Map[String, Int]].map { sessMap: Map[String, Int] =>
-        Logger.debug(s"got ${sessMap.size} recs")
-        sessMap
-      }
-    val sessMap: Map[String, Int] = Await.result(dumpFuture, waitTime)
-    val sessJsonObj = {
-      for {
-        sessKey <- sessMap.keys
-      } yield sessKey -> JsNumber(sessMap.get(sessKey).get)
-    }.toMap
-    Ok(JsObject(sessJsonObj))
   }
 
   /**

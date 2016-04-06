@@ -16,9 +16,9 @@ GET           /get/Email/:email                         controllers.QueryControl
 GET           /get/Username/:username                   controllers.QueryController.byUsername(username: String)
 GET           /get/Years/:uid                           controllers.QueryController.byYears(uid: Integer)
 
-GET           /valid/User/:userid/:pwd                  controllers.QueryController.validateUser(userid: String, pwd: String)
-GET           /invalid/User/:sess/:uid                  controllers.QueryController.invalidateUser(sess: String, uid: Int)
-GET           /dumpsess                                 controllers.QueryController.dumpMap
+GET           /valid/User/:userid/:pwd                  controllers.ValidationController.validateUser(userid: String, pwd: String)
+GET           /invalid/User/:sess/:uid                  controllers.ValidationController.invalidateUser(sess: String, uid: Int)
+GET           /dumpsess                                 controllers.ValidationController.dumpMap
 
 # create objects
 POST          /add/User                                 controllers.CrudController.addUser
