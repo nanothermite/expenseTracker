@@ -153,7 +153,7 @@ class ValidationController @Inject()(system: ActorSystem) extends Controller wit
     if (pwdList.nonEmpty) {
       val membUser = pwdList.head.asInstanceOf[MemberUser]
       val pwdHash = membUser.password
-      val valid = if (toHexString(passwd, Charset.forName("UTF-8")) == pwdHash) true else false
+      val valid = toHexString(passwd, Charset.forName("UTF-8")) == pwdHash
       if (valid)
         secActor ! InitSession(ranSession, membUser.id.toInt)
       Ok(if (valid)
