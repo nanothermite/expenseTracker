@@ -50,8 +50,7 @@ class UploadController @Inject() (system: ActorSystem) extends Controller with m
           errorJson("bad type")
       Ok(ret)
     }.getOrElse {
-      Redirect(routes.QueryController.index()).flashing(
-        "error" -> "Missing file")
+      Ok(Json.obj("error" -> "Missing file"))
     }
   }
 }
