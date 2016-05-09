@@ -71,10 +71,6 @@ class QueryController @Inject() (system: ActorSystem) extends Controller with my
     "where m.uid = u.id and " +
     "u.username = :username"
 
-  def index = Action {
-    Ok(views.html.index("Your new application is ready."))
-  }
-
   def genSql(query: String, colMap: scala.collection.mutable.Map[String, String]): RawSql = {
     val rawSqlBld = RawSqlBuilder.parse(query)
     for ((k, v) <- colMap) {
