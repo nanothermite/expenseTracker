@@ -8,5 +8,6 @@ import play.filters.cors.CORSFilter
 import play.filters.headers.SecurityHeadersFilter
 
 class Filters @Inject() (corsFilter: CORSFilter, secFilter: SecurityHeadersFilter) extends HttpFilters {
-  def filters = Seq(corsFilter, secFilter)
+  override def filters =
+    Seq(corsFilter, secFilter)
 }

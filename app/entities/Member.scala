@@ -207,7 +207,7 @@ class Member extends BaseObject {
       "email" -> email,
       "fname" -> fname,
       "lname" -> lname,
-      "userid" -> jsonNullCheck(uid.id),
+      "userid" -> jsonNullCheck(uid.id.toDouble),
       "type" -> `type`,
       "street1" -> jsonNullCheck(street1),
       "street2" -> jsonNullCheck(street2),

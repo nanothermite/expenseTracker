@@ -7,22 +7,22 @@ import scala.reflect.runtime.universe._
 /**
  * Created by hkatz on 3/20/15.
  */
-abstract class Dao[T](cls:Class[T]) extends myTypes {
+abstract class Dao[X](cls:Class[X]) extends myTypes {
 
   /**
    * Find by Id
    */
-  def find(id: Any): Option[T] = Option(Ebean.find(cls, id))
+  def find(id: Any): Option[X] = Option(Ebean.find(cls, id))
 
   /**
    * find with expressions and joins etc
    */
-  def find: Query[T] = Ebean.find(cls)
+  def find: Query[X] = Ebean.find(cls)
 
   /**
    * return a reference
    */
-  def ref(id: Any): T = Ebean.getReference(cls, id)
+  def ref(id: Any): X = Ebean.getReference(cls, id)
 
   /**
    * Save (insert)
@@ -39,6 +39,5 @@ abstract class Dao[T](cls:Class[T]) extends myTypes {
    */
   def delete(o: Any): Unit = Ebean.delete(o)
 
-  def createQuery[T: TypeTag](c: Class[T], n: String): Query[T] =
-    Ebean.createNamedQuery[T](c, n)
+  def createQuery(c: Class[X], n: String): Query[X] = Ebean.createNamedQuery[X](c, n)
 }

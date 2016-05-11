@@ -24,14 +24,14 @@ object ProcessXLS {
     val wb = WorkbookFactory.create(xlsFile)
 
     def getCellString(cell: Cell) = {
-      cell.getCellType() match {
+      cell.getCellType match {
         case Cell.CELL_TYPE_NUMERIC =>
-          (new DataFormatter()).formatCellValue(cell)
+          new DataFormatter().formatCellValue(cell)
         case Cell.CELL_TYPE_STRING =>
-          cell.getStringCellValue()
+          cell.getStringCellValue
         case Cell.CELL_TYPE_FORMULA =>
-          val evaluator = wb.getCreationHelper().createFormulaEvaluator()
-          (new DataFormatter()).formatCellValue(cell, evaluator)
+          val evaluator = wb.getCreationHelper.createFormulaEvaluator()
+          new DataFormatter().formatCellValue(cell, evaluator)
         case _ => " "
       }
     }

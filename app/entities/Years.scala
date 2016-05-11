@@ -23,13 +23,13 @@ object Years extends Dao(classOf[Years]){
 
   /**
    *
-   * @param sql
-   * @param pList
+   * @param sql ebean raw
+   * @param pList params
    * @return
    */
   def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[Years] = {
     val q = Years.find
-    if (!pList.isEmpty)
+    if (pList.isDefined)
       for ((k:String,v:Object) <- pList.get) {
         q.setParameter(k, v)
       }
@@ -42,10 +42,10 @@ object Years extends Dao(classOf[Years]){
 
   /**
    *
-   * @param year
+   * @param year YYYY
    */
   def create(year: Integer): Unit = {
-    var y = new Years
+    val y = new Years
     y.year = year
     save(y)
   }

@@ -1,8 +1,8 @@
 package controllers
 
 import _root_.common.Shared
-import shade.memcached.Memcached
 import play.api.libs.concurrent.Promise._
+import shade.memcached.Memcached
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future

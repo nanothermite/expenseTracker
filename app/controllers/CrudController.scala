@@ -1,25 +1,38 @@
 package controllers
 
-import java.util.Date
-import javax.inject.Inject
-
 import _root_.common.BaseObject
 import com.mohiva.play.silhouette.api.{Environment, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import entities._
-import models.User
-import play.api.i18n.MessagesApi
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, JsValue, Reads, _}
 import play.api.mvc._
+import play.api.i18n.MessagesApi
+import models.User
+import java.util.Date
+import javax.inject.Inject
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class CrudController @Inject() (val messagesApi: MessagesApi,
                                 val env: Environment[User, CookieAuthenticator],
                                 socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User, CookieAuthenticator]
   with SeqOps {
+
+  def myid = Action.async { implicit request =>
+    SecuredRequestHandler { securedRequest =>
+      Future.successful(HandlerResult(Ok, Some(securedRequest.identity)))
+    }.map {
+      case HandlerResult(r, Some(user)) => Ok(user.asInstanceOf[User].toJSON)
+      case HandlerResult(r, None) => Ok(Json.obj("status" -> Json.toJson("no access")))
+    }
+  }
+
+  override def onNotAuthenticated(request: RequestHeader): Option[Future[Result]] = {
+    Some(Future.successful(Ok(Json.obj("status" -> Json.toJson("no access")))))
+  }
 
   /**
    * delete properties of existing object

@@ -58,7 +58,7 @@ class Transactions extends BaseObject {
     "debit" -> jsonNullCheck(debit),
     "credit" -> jsonNullCheck(credit),
     "trantype" -> jsonNullCheck(trantype),
-    "userid" -> jsonNullCheck(userid.id)
+    "userid" -> jsonNullCheck(userid.id.toDouble)
   )
 }
 

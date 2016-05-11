@@ -78,6 +78,19 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     "where m.uid = u.id and " +
     "u.username = :username"
 
+  def myid = Action.async { implicit request =>
+    SecuredRequestHandler { securedRequest =>
+      Future.successful(HandlerResult(Ok, Some(securedRequest.identity)))
+    }.map {
+      case HandlerResult(r, Some(user)) => Ok(user.asInstanceOf[User].toJSON)
+      case HandlerResult(r, None) => Ok(Json.obj("status" -> Json.toJson("no access")))
+    }
+  }
+
+  override def onNotAuthenticated(request: RequestHeader): Option[Future[Result]] = {
+    Some(Future.successful(Ok(Json.obj("status" -> Json.toJson("no access")))))
+  }
+
   def genSql(query: String, colMap: scala.collection.mutable.Map[String, String]): RawSql = {
     val rawSqlBld = RawSqlBuilder.parse(query)
     for ((k, v) <- colMap) {
