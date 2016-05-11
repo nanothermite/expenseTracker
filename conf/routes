@@ -3,65 +3,68 @@
 # ~~~~
 
 # Home page
-GET         /                                           controllers.ApplicationController.index
-GET         /signIn                                     controllers.ApplicationController.signIn
-GET         /signUp                                     controllers.ApplicationController.signUp
-GET         /signOut                                    controllers.ApplicationController.signOut
-GET         /authenticate/:provider                     controllers.SocialAuthController.authenticate(provider)
-POST        /authenticate/credentials                   controllers.CredentialsAuthController.authenticate
-POST        /signUp                                     controllers.SignUpController.signUp
+GET          /                                                 controllers.ApplicationController.index
+GET          /signIn                                           controllers.ApplicationController.signIn
+GET          /signUp                                           controllers.ApplicationController.signUp
+GET          /signOut                                          controllers.ApplicationController.signOut
+GET          /authenticate/:provider                           controllers.SocialAuthController.authenticate(provider)
+POST         /authenticate/credentials                         controllers.CredentialsAuthController.authenticate
+POST         /signUp                                           controllers.SignUpController.signUp
+
+GET          /expense/get/id1                                  controllers.CrudController.myid
+GET          /expense/get/id2                                  controllers.QueryController.myid
 
 # Home page
-GET           /get/Month/:m/:uid                        controllers.QueryController.byMonth(m: Integer, uid: Integer)
-GET           /get/Quarter/:m/:uid                      controllers.QueryController.byQuarter(m: Integer, uid: Integer)
-GET           /get/Category/:m/:uid                     controllers.QueryController.byCategory(m: Integer, uid: Integer)
-GET           /get/Email/:email                         controllers.QueryController.byEmail(email: String)
-GET           /get/Username/:username                   controllers.QueryController.byUsername(username: String)
-GET           /get/Years/:uid                           controllers.QueryController.byYears(uid: Integer)
+GET          /expense/get/Month/:m/:uid                        controllers.QueryController.byMonth(m: Integer, uid: Integer)
+GET          /expense/get/Quarter/:m/:uid                      controllers.QueryController.byQuarter(m: Integer, uid: Integer)
+GET          /expense/get/Category/:m/:uid                     controllers.QueryController.byCategory(m: Integer, uid: Integer)
+GET          /expense/get/Email/:email                         controllers.QueryController.byEmail(email: String)
+GET          /expense/get/Username/:username                   controllers.QueryController.byUsername(username: String)
+GET          /expense/get/Years/:uid                           controllers.QueryController.byYears(uid: Integer)
 
-GET           /valid/User/:userid/:pwd                  controllers.ValidationController.validateUser(userid: String, pwd: String)
-GET           /invalid/User/:sess/:uid                  controllers.ValidationController.invalidateUser(sess: String, uid: Int)
-GET           /dumpsess                                 controllers.ValidationController.dumpMap
+GET          /expense/valid/User/:userid/:pwd                  controllers.ValidationController.validateUser(userid: String, pwd: String)
+GET          /expense/invalid/User/:sess/:uid                  controllers.ValidationController.invalidateUser(sess: String, uid: Int)
+GET          /expense/dumpsess                                 controllers.ValidationController.dumpMap
 
 # create objects
-POST          /add/User                                 controllers.CrudController.addUser
-POST          /add/Member/:userid                       controllers.CrudController.addMember(userid: Long)
-POST          /add/Contact/:userid                      controllers.CrudController.addContact(userid: Long)
-POST          /add/Xaction/:userid/:contactid           controllers.CrudController.addTransaction(userid: Long, contactid: Long)
+POST         /expense/add/User                                 controllers.CrudController.addUser
+POST         /expense/add/Member/:userid                       controllers.CrudController.addMember(userid: Long)
+POST         /expense/add/Contact/:userid                      controllers.CrudController.addContact(userid: Long)
+POST         /expense/add/Xaction/:userid/:contactid           controllers.CrudController.addTransaction(userid: Long, contactid: Long)
 
 # find entities
-GET           /get/User                                 controllers.CrudController.getUser(id: Long = 0)
-GET           /get/User/:id                             controllers.CrudController.getUser(id: Long)
-GET           /get/Contact/all/:userid                  controllers.CrudController.getContact(id: Long = 0, userid: Long)
-GET           /get/Contact/:id/:userid                  controllers.CrudController.getContact(id: Long, userid: Long)
-GET           /get/Member/all/:userid                   controllers.CrudController.getMember(id: Long = 0, userid: Long)
-GET           /get/Member/:id/:userid                   controllers.CrudController.getMember(id: Long, userid: Long)
-GET           /get/Xaction/all/:userid                  controllers.CrudController.getTransactions(id: Long = 0, userid: Long)
-GET           /get/Xaction/:id/:userid                  controllers.CrudController.getTransactions(id: Long, userid: Long)
+GET          /expense/get/User                                 controllers.CrudController.getUser(id: Long = 0)
+GET          /expense/get/User/:id                             controllers.CrudController.getUser(id: Long)
+GET          /expense/get/Contact/all/:userid                  controllers.CrudController.getContact(id: Long = 0, userid: Long)
+GET          /expense/get/Contact/:id/:userid                  controllers.CrudController.getContact(id: Long, userid: Long)
+GET          /expense/get/Member/all/:userid                   controllers.CrudController.getMember(id: Long = 0, userid: Long)
+GET          /expense/get/Member/:id/:userid                   controllers.CrudController.getMember(id: Long, userid: Long)
+GET          /expense/get/Xaction/all/:userid                  controllers.CrudController.getTransactions(id: Long = 0, userid: Long)
+GET          /expense/get/Xaction/:id/:userid                  controllers.CrudController.getTransactions(id: Long, userid: Long)
 
 # update existing objects
-POST          /update/User/:userid                      controllers.CrudController.updateUser(userid: Long)
-POST          /update/Member/:memberid/:userid          controllers.CrudController.updateMember(memberid: Long, userid: Long)
-POST          /update/Contact/:contactid/:userid        controllers.CrudController.updateContact(contactid: Long, userid: Long)
-POST          /update/Xaction/:xactid/:userid           controllers.CrudController.updateTransaction(xactid: Long, userid: Long)
+POST         /expense/update/User/:userid                      controllers.CrudController.updateUser(userid: Long)
+POST         /expense/update/Member/:memberid/:userid          controllers.CrudController.updateMember(memberid: Long, userid: Long)
+POST         /expense/update/Contact/:contactid/:userid        controllers.CrudController.updateContact(contactid: Long, userid: Long)
+POST         /expense/update/Xaction/:xactid/:userid           controllers.CrudController.updateTransaction(xactid: Long, userid: Long)
 
-POST          /uploadFile                               controllers.UploadController.uploadFile
+POST         /expense/uploadFile                               controllers.UploadController.uploadFile
 
 # template download
-GET           /get/Template/:tempType                   controllers.XLSController.sendTemplate(tempType: String)
+GET          /expense/get/Template/:tempType                   controllers.XLSController.sendTemplate(tempType: String)
 
 # drop existing objects
-DELETE        /drop/User/:userid                        controllers.CrudController.dropUser(userid: Long)
-DELETE        /drop/Member/:memberid                    controllers.CrudController.dropMember(memberid: Long)
-DELETE        /drop/Contact/:contactid                  controllers.CrudController.dropContact(contactid: Long)
-DELETE        /drop/Xaction/:xactid                     controllers.CrudController.dropTransaction(xactid: Long)
+DELETE       /expense/drop/User/:userid                        controllers.CrudController.dropUser(userid: Long)
+DELETE       /expense/drop/Member/:memberid                    controllers.CrudController.dropMember(memberid: Long)
+DELETE       /expense/drop/Contact/:contactid                  controllers.CrudController.dropContact(contactid: Long)
+DELETE       /expense/drop/Xaction/:xactid                     controllers.CrudController.dropTransaction(xactid: Long)
 
 # memcached ops
-GET           /mem/add/:k/:v                            controllers.CacheController.memadd(k: String, v: String)
-GET           /mem/set/:k/:v                            controllers.CacheController.memset(k: String, v: String)
-GET           /mem/get/:k                               controllers.CacheController.memget(k: String)
-GET           /mem/del/:k                               controllers.CacheController.memdrop(k: String)
+GET          /expense/mem/add/:k/:v                            controllers.CacheController.memadd(k: String, v: String)
+GET          /expense/mem/set/:k/:v                            controllers.CacheController.memset(k: String, v: String)
+GET          /expense/mem/get/:k                               controllers.CacheController.memget(k: String)
+GET          /expense/mem/del/:k                               controllers.CacheController.memdrop(k: String)
 
 # Map static resources from the /public folder to the /assets URL path
-GET           /assets/*file                             controllers.Assets.at(path="/public", file)
-GET           /webjars/*file                            controllers.WebJarAssets.at(file)
+GET          /assets/*file                             controllers.Assets.at(path="/public", file)
+GET          /webjars/*file                            controllers.WebJarAssets.at(file)
