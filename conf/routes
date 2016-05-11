@@ -3,10 +3,13 @@
 # ~~~~
 
 # Home page
-#GET           /                                         controllers.QueryController.index
-
-# Map static resources from the /public folder to the /assets URL path
-GET           /assets/*file                             controllers.Assets.versioned(path="/public", file: Asset)
+GET         /                                           controllers.ApplicationController.index
+GET         /signIn                                     controllers.ApplicationController.signIn
+GET         /signUp                                     controllers.ApplicationController.signUp
+GET         /signOut                                    controllers.ApplicationController.signOut
+GET         /authenticate/:provider                     controllers.SocialAuthController.authenticate(provider)
+POST        /authenticate/credentials                   controllers.CredentialsAuthController.authenticate
+POST        /signUp                                     controllers.SignUpController.signUp
 
 # Home page
 GET           /get/Month/:m/:uid                        controllers.QueryController.byMonth(m: Integer, uid: Integer)
@@ -58,3 +61,7 @@ GET           /mem/add/:k/:v                            controllers.CacheControl
 GET           /mem/set/:k/:v                            controllers.CacheController.memset(k: String, v: String)
 GET           /mem/get/:k                               controllers.CacheController.memget(k: String)
 GET           /mem/del/:k                               controllers.CacheController.memdrop(k: String)
+
+# Map static resources from the /public folder to the /assets URL path
+GET           /assets/*file                             controllers.Assets.at(path="/public", file)
+GET           /webjars/*file                            controllers.WebJarAssets.at(file)

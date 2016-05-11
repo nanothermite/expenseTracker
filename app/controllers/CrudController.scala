@@ -1,15 +1,25 @@
 package controllers
 
 import java.util.Date
+import javax.inject.Inject
+
 import _root_.common.BaseObject
+import com.mohiva.play.silhouette.api.{Environment, Silhouette}
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import entities._
+import models.User
+import play.api.i18n.MessagesApi
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, JsValue, Reads, _}
 import play.api.mvc._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class CrudController extends Controller with SeqOps {
+class CrudController @Inject() (val messagesApi: MessagesApi,
+                                val env: Environment[User, CookieAuthenticator],
+                                socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User, CookieAuthenticator]
+  with SeqOps {
 
   /**
    * delete properties of existing object

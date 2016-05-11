@@ -4,12 +4,15 @@ import java.util.Date
 import javax.inject.Inject
 
 import _root_.common.{BaseObject, Shared, myTypes}
-import akka.actor.ActorSystem
 import com.avaje.ebean._
+import com.mohiva.play.silhouette.api.{Environment, Silhouette}
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import entities._
+import models.User
+import play.api.i18n.MessagesApi
 import play.api.libs.json.{JsValue, _}
 import play.api.mvc._
-import utils.Sha256
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -17,8 +20,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
+import scala.concurrent.Future
 
-class QueryController @Inject() (system: ActorSystem) extends Controller with myTypes with Sha256 with SeqOps {
+class QueryController @Inject() (val messagesApi: MessagesApi,
+                                 val env: Environment[User, CookieAuthenticator],
+                                 socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User, CookieAuthenticator]
+  with myTypes with SeqOps {
 
   val r = Shared.r
 
