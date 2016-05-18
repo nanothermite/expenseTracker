@@ -13,6 +13,8 @@ import models.User
 import java.util.Date
 import javax.inject.Inject
 
+import play.filters.csrf.CSRF
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -28,6 +30,11 @@ class CrudController @Inject() (val messagesApi: MessagesApi,
       case HandlerResult(r, Some(user)) => Ok(user.asInstanceOf[User].toJSON)
       case HandlerResult(r, None) => Ok(Json.obj("status" -> Json.toJson("no access")))
     }
+  }
+
+  def token = Action.async { implicit request =>
+    val token = CSRF.getToken(request)
+    Future.successful(Ok(Json.obj("token" -> Json.toJson(token.getOrElse("no token found").asInstanceOf[String]))))
   }
 
   override def onNotAuthenticated(request: RequestHeader): Option[Future[Result]] = {

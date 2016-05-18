@@ -24,5 +24,5 @@ trait JSONConvertible {
 
   def jsonNullCheck(obj: String) = if (obj != null) Json.toJson(obj) else JsNull
 
-  def jsonNullCheck(obj: Double) = if (obj != null) Json.toJson(obj) else JsNull
+  def jsonNullCheck(obj: Double) = if (obj != 0.0) Json.toJson(obj) else JsNull    // TODO
 }
