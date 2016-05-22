@@ -1,0 +1,247 @@
+@()(implicit request: RequestHeader, messages: Messages)
+
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Expense Tracker</title>
+            <!-- link rel='stylesheet' href='css/modern.css' -->
+        <link rel='stylesheet' href="@routes.Assets.at("css/bootstrap/bootstrap.css")">
+        <link rel='stylesheet' href="@routes.Assets.at("css/bootstrap/bootstrap-theme.css")">
+        <link rel='stylesheet' href="@routes.Assets.at("css/bootstrap/bootstrap-multiselect.css")">
+        <link rel='stylesheet' href="@routes.Assets.at("css/bootstrap/bootstrap-datetimepicker.css")">
+        <link rel='stylesheet' href="@routes.Assets.at("css/bootstrap/bootstrap-slider.css")">
+        <link href="http://cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
+        <link rel='stylesheet' href="@routes.Assets.at("css/jquery-ui.min.css")">
+        <link rel='stylesheet' href="@routes.Assets.at("css/jquery.tablesorter.pager.css")">
+        <link rel='stylesheet' href="@routes.Assets.at("css/fileinput.css")">
+        <link rel="stylesheet" href="@routes.Assets.at("css/style.css")">
+        <script src="@routes.Assets.at("js/external/jquery-1.12.0.js")"></script>
+        <script src="@routes.Assets.at("js/external/jquery-ui.min.js")"></script>
+        <script src="@routes.Assets.at("js/external/jquery.tablesorter.js")"></script>
+        <script src="@routes.Assets.at("js/external/jquery.tablesorter.widgets.js")"></script>
+    </head>
+    <body role="document">
+
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">
+                        <div>
+                            <img alt="logo" style="margin-top: -17px;" height="40" src="@routes.Assets.at("images/header/iscsLogo.png")">
+                            Expense Tracking
+                        </div>
+                    </a>
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav" role="tablist">
+                        <li class="active"><a href="#hometab" data-toggle="tab">Home</a></li>
+                        <li class="authTab disabled"><a href="#loadtab" data-toggle="tab">Load</a></li>
+                        <li class="authTab dropdown disabled">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+                            aria-expanded="false">Update <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#editContactsTab" data-toggle="tab">Contacts</a></li>
+                                <li><a href="#editExpensesTab" data-toggle="tab">Expenses</a></li>
+                            </ul>
+                        </li>
+                        <li class="authTab disabled"><a href="#analyzeTab" data-toggle="tab">Analyze</a></li>
+                    </ul>
+                        <!--  login component -->
+                    <ul id="loginnav" class="nav navbar-nav navbar-right">
+                        <li><p class="navbar-text">Already have an account?</p></li>
+                        <li id="logindrop" class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b>
+                                Login</b> <span class="caret"></span></a>
+                            <ul id="login-dp" class="dropdown-menu">
+                                <li>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            Login via
+                                            <div class="social-buttons">
+                                                <a id="fcbk" href="@routes.SocialAuthController.authenticate("facebook")" class="btn btn-fb"><i class="fa fa-facebook"></i>
+                                                    Facebook</a>
+                                                <a id="twit" href="@routes.SocialAuthController.authenticate("twitter")" class="btn btn-tw"><i class="fa fa-twitter"></i>
+                                                    Twitter</a>
+                                                <a id="goog" href="@routes.SocialAuthController.authenticate("google")" class="btn btn-gp"><i class="fa fa-google"></i>
+                                                    Google+</a>
+                                            </div>
+                                            or
+                                            <form class="form" role="form" method="post" accept-charset="UTF-8" id="login-nav">
+                                                @helper.CSRF.formField
+                                                <div class="form-group">
+                                                    <label class="sr-only" for="email">Email address</label>
+                                                    <input type="text" class="form-control" id="email" placeholder="User name" required>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="sr-only" for="pwd">Password</label>
+                                                    <input type="password" class="form-control" id="pwd" placeholder="Password" required>
+                                                    <div class="help-block text-right"><a href="">
+                                                        Forget the password ?</a></div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox"> keep me logged-in
+                                                    </label>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="bottom text-center">
+                                            New here ? <a href="#"><b>Join Us</b></a>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><p id="welcome" class="navbar-text hidden">Hi, </p></li>
+                        <li><a id="logout" href="#" class="hidden btn btn-fb">Logout</a></li>
+                    </ul>
+                </div>
+                    <!--/.nav-collapse -->
+            </div>
+        </nav>
+
+
+        <div id="app" class="container-fluid theme-showcase" role="main">
+            <div class="tab-content">
+                <div id="hometab" class="tab-pane active">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="jumbotron">
+                                <h2>Expense Tracker main3</h2>
+                                <p><small>Keep track of your expenses.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="loadtab" class="tab-pane">
+                        <div class="row">
+                            <div class="col-md-12">
+                            </div>
+                        </div>
+                    </div>
+                    <div id="editExpensesTab" class="tab-pane">
+                        <div class="row">
+                        </div>
+                    </div>
+                    <div id="editContactsTab" class="tab-pane">
+                        <div class="row">
+                        </div>
+                    </div>
+                    <div id="analyzeTab" class="tab-pane">
+                        <div class="row extra-bottom-padding">
+                            <div class="col-md-6">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="panel panel-default">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+                <!-- Template for update contacts row -->
+
+            <script type="text/template" class="contacts-row">
+            <tr>
+            <td><a class="editme text-nowrap" href="#" data-name="bizname" data-pk="<%= data.id %>" data-title="Bizname" ><%= data.bizname %></a></td>
+            <td><a class="editme text-nowrap" href="#" data-name="industry" data-pk="<%= data.id %>" data-title="Industry" ><%= data.industry %></a></td>
+            <td><a class="editme text-nowrap" href="#" data-name="phone" data-pk="<%= data.id %>" data-title="Phone"><%= data.phone %></a></td>
+            <td><a class="editme text-nowrap" href="#" data-name="city" data-pk="<%= data.id %>" data-title="City"><%= data.city %></a></td>
+            <td><a class="editme text-nowrap" href="#" data-name="state" data-pk="<%= data.id %>" data-title="State"><%= data.state %></a></td>
+            </tr>
+            </script>
+
+                <!-- Template for update expenses row -->
+
+            <script type="text/template" class="expenses-row">
+            <tr>
+            <td><a class="editme text-nowrap" href="#" data-type="combodate" data-name="trandate" data-pk="<%= data.id %>" data-title="Date" ><%= data.trandate %></a></td>
+            <td><a class="editme text-nowrap" href="#" data-type="text" data-name="vendor" data-pk="<%= data.id %>" data-title="Vendor" ><%= data.vendor %></a></td>
+            <td><a class="editme text-nowrap" href="#" data-type="text" data-name="acct" data-pk="<%= data.id %>" data-title="Acct"><%= data.acct %></a></td>
+            <td><a class="editme text-nowrap" href="#" data-type="text" data-name="description" data-pk="<%= data.id %>" data-title="Description"><%= data.description %></a></td>
+            <td><a class="editme text-nowrap" href="#" data-type="text" data-name="trantype" data-pk="<%= data.id %>" data-title="Type"><%= data.trantype %></a></td>
+            </tr>
+            </script>
+
+                <!-- Template for analyze row -->
+
+            <script type="text/template" class="analyze-result-row">
+            <tr>
+            <td class="text-right"><%= accounting.formatMoney(data.credit) %></td>
+            <td class="text-right"><%= accounting.formatMoney(data.debit) %></td>
+            <td class="text-right"><% if (data.period_type == "N"){ %>
+            <%= base.months[data.period - 1] %>
+            <% } else { %>
+            <%= data.period %>
+            <% } %>
+            </td>
+            </tr>
+            </script>
+
+                <!-- General Includes -->
+            <script src="@routes.Assets.at("js/external/underscore.js")"></script>
+            <script src="@routes.Assets.at("js/external/backbone.js")"></script>
+            <script src="@routes.Assets.at("js/external/handlebars.js")"></script>
+            <script src="@routes.Assets.at("js/external/moment.js")"></script>
+            <script src="@routes.Assets.at("js/external/dialog.js")"></script>
+            <script src="@routes.Assets.at("js/external/fileinput.js")"></script>
+            <script src="@routes.Assets.at("js/external/accounting.js")"></script>
+            <script src="@routes.Assets.at("js/external/bootstrap/bootstrap.js")"></script>
+            <script src="@routes.Assets.at("js/external/bootstrap/button.js")"></script>
+            <script src="@routes.Assets.at("js/external/bootstrap/bootstrap-datetimepicker.js")"></script>
+            <script src="@routes.Assets.at("js/external/bootstrap/bootstrap-multiselect.js")"></script>
+            <script src="@routes.Assets.at("js/external/bootstrap/bootstrap-slider.js")"></script>
+            <script src="@routes.Assets.at("js/external/bootstrap/bootstrap-editable.js")"></script>
+
+                <!-- Common -->
+            <script src="@routes.Assets.at("js/app/base.js")"></script>
+
+                <!-- Model -->
+            <script src="@routes.Assets.at("js/app/model/CPDSearch.js")"></script>
+            <script src="@routes.Assets.at("js/app/model/Search.js")"></script>
+            <script src="@routes.Assets.at("js/app/model/Aggregate.js")"></script>
+            <script src="@routes.Assets.at("js/app/model/BaseObj.js")"></script>
+            <script src="@routes.Assets.at("js/app/model/User.js")"></script>
+            <script src="@routes.Assets.at("js/app/model/Contact.js")"></script>
+            <script src="@routes.Assets.at("js/app/model/Member.js")"></script>
+            <script src="@routes.Assets.at("js/app/model/Xaction.js")"></script>
+            <script src="@routes.Assets.at("js/app/model/Auth.js")"></script>
+
+                <!-- Collections -->
+            <script src="@routes.Assets.at("js/app/collection/Aggregates.js")"></script>
+            <script src="@routes.Assets.at("js/app/collection/Users.js")"></script>
+            <script src="@routes.Assets.at("js/app/collection/Contacts.js")"></script>
+            <script src="@routes.Assets.at("js/app/collection/Members.js")"></script>
+            <script src="@routes.Assets.at("js/app/collection/Xactions.js")"></script>
+            <script src="@routes.Assets.at("js/app/collection/Auths.js")"></script>
+
+                <!-- View -->
+            <script src="@routes.Assets.at("js/app/view/AnalyzeView.js")"></script>
+            <script src="@routes.Assets.at("js/app/view/AuthenticateView.js")"></script>
+            <script src="@routes.Assets.at("js/app/view/UpdateContactView.js")"></script>
+            <script src="@routes.Assets.at("js/app/view/UpdateExpenseView.js")"></script>
+
+                <!-- Router -->
+            <script src="@routes.Assets.at("js/app/router/AppRouter.js")"></script>
+
+                <!-- Util -->
+            <script src="@routes.Assets.at("js/app/util/Helpers.js")"></script>
+
+
+                <!-- The 'main' for this app -->
+            <script src="@routes.Assets.at("js/app/app.js")"></script>
+
+    </body>
+</html>

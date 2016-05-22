@@ -8,6 +8,8 @@ import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import forms._
 import models.User
 import play.api.i18n.MessagesApi
+import play.api.Logger
+import play.api.mvc.Action
 
 import scala.concurrent.Future
 
@@ -30,7 +32,18 @@ class ApplicationController @Inject()(
    * @return The result to display.
    */
   def index = SecuredAction.async { implicit request =>
-    Future.successful(Ok(views.html.home(request.identity)))
+    Future.successful {
+      val u = request.identity
+      Logger.info(s"got user before main2: ${u.firstName}")
+      Ok(views.html.main2(request.identity))
+    }
+  }
+
+  def landing = Action.async { implicit request =>
+    Future.successful {
+      Logger.info(s"unsecure landing main2")
+      Ok(views.html.main3())
+    }
   }
 
   /**
@@ -39,9 +52,17 @@ class ApplicationController @Inject()(
    * @return The result to display.
    */
   def signIn = UserAwareAction.async { implicit request =>
+    Logger.info("in signin")
     request.identity match {
-      case Some(user) => Future.successful(Redirect(routes.ApplicationController.index()))
-      case None => Future.successful(Ok(views.html.signIn(SignInForm.form, socialProviderRegistry)))
+      case Some(user) =>
+        Future.successful{
+          Logger.info(s"got user: ${user.firstName}")
+          Redirect(routes.ApplicationController.index())
+        }
+      case None => Future.successful {
+        Logger.info(s"authenticating user")
+        Ok(views.html.signIn(SignInForm.form, socialProviderRegistry))
+      }
     }
   }
 
@@ -63,7 +84,7 @@ class ApplicationController @Inject()(
    * @return The result to display.
    */
   def signOut = SecuredAction.async { implicit request =>
-    val result = Redirect(routes.ApplicationController.index())
+    val result = Redirect(routes.ApplicationController.landing())
     env.eventBus.publish(LogoutEvent(request.identity, request, request2Messages))
 
     env.authenticatorService.discard(request.authenticator, result)
