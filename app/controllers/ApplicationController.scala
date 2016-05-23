@@ -35,13 +35,16 @@ class ApplicationController @Inject()(
     Future.successful {
       val u = request.identity
       Logger.info(s"got user before main2: ${u.firstName}")
-      Ok(views.html.main2(request.identity))
+      if (u.email.isDefined) {
+
+      }
+      Ok(views.html.main2(u))
     }
   }
 
   def landing = Action.async { implicit request =>
     Future.successful {
-      Logger.info(s"unsecure landing main2")
+      Logger.info(s"unsecure landing main3")
       Ok(views.html.main3())
     }
   }

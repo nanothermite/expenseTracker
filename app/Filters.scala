@@ -5,12 +5,12 @@ import javax.inject.Inject
 
 import play.api.http.HttpFilters
 import play.filters.cors.CORSFilter
+import play.filters.csrf.CSRFFilter
 import play.filters.headers.SecurityHeadersFilter
-import utils.LoggingFilter
 
 class Filters @Inject() (corsFilter: CORSFilter,
                          secFilter: SecurityHeadersFilter,
-                         log: LoggingFilter) extends HttpFilters {
+                         csrfFilter: CSRFFilter) extends HttpFilters {
   override def filters =
-    Seq(corsFilter, secFilter, log)
+    Seq(corsFilter, secFilter, csrfFilter)
 }

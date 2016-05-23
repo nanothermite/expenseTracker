@@ -3,8 +3,8 @@
 # ~~~~
 
 # Home page
-GET          /                                                 controllers.ApplicationController.landing
-GET          /secure                                           controllers.ApplicationController.index
+GET          /expense                                          controllers.ApplicationController.landing
+GET          /expense/secure                                   controllers.ApplicationController.index
 GET          /signIn                                           controllers.ApplicationController.signIn
 GET          /signUp                                           controllers.ApplicationController.signUp
 GET          /signOut                                          controllers.ApplicationController.signOut

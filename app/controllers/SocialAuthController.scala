@@ -11,6 +11,7 @@ import models.User
 import models.services.UserService
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
+import play.api.libs.json.Json
 import play.api.mvc.Action
 
 import scala.concurrent.Future
@@ -51,6 +52,7 @@ class SocialAuthController @Inject()(
             value <- env.authenticatorService.init(authenticator)
             result <- env.authenticatorService.embed(value, Redirect(routes.ApplicationController.index()))
           } yield {
+            logger.error(s"user: ${user.toJSON}, cookie: ${value.value}")
             env.eventBus.publish(LoginEvent(user, request, request2Messages))
             result
           }

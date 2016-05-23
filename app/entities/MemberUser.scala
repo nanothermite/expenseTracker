@@ -10,6 +10,7 @@ import common.Dao
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.{mutable => mu, immutable => im}
 
 /**
  * Created by hkatz on 3/26/15.
@@ -77,7 +78,7 @@ object MemberUser extends Dao(classOf[MemberUser]){
    * @param pList params
    * @return
    */
-  def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[MemberUser] = {
+  def allq(sql:RawSql, pList:Option[im.Map[String, AnyRef]]) : List[MemberUser] = {
     val q = MemberUser.find
     if (pList.isDefined)
       for ((k:String,v:Object) <- pList.get) {
