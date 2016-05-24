@@ -31,9 +31,6 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
 
   val m = ru.runtimeMirror(getClass.getClassLoader)
 
-  //var colOrder = Seq.empty[String] //new ArrayBuffer[String]()
-  //var colMap = scala.collection.mutable.Map[String, String]()
-  //var pList = new java.util.HashMap[String, Object]()
   val datePattern = "yyyy-MM-dd"
 
   val byMonthsql = "select sum(s.credit) as credit, " +
