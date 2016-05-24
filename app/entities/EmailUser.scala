@@ -12,6 +12,7 @@ import play.data.validation.Constraints
 import utils.DateFormatter
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.{mutable => mu, immutable => im}
 
 /**
  * Created by hkatz on 3/26/15.
@@ -71,7 +72,7 @@ object EmailUser extends Dao(classOf[EmailUser]){
    * @param pList params
    * @return
    */
-  def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[EmailUser] = {
+  def allq(sql:RawSql, pList:Option[im.Map[String, AnyRef]]) : List[EmailUser] = {
     val q = EmailUser.find
     if (pList.isDefined)
       for ((k:String,v:Object) <- pList.get) {

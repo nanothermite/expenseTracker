@@ -14,13 +14,13 @@ import play.api.i18n.MessagesApi
 import play.api.libs.json.{JsValue, _}
 import play.api.mvc._
 
-import scala.collection.JavaConversions._
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.{immutable => im, mutable => mu}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{universe => ru}
-import scala.concurrent.Future
 
 class QueryController @Inject() (val messagesApi: MessagesApi,
                                  val env: Environment[User, CookieAuthenticator],
@@ -31,9 +31,9 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
 
   val m = ru.runtimeMirror(getClass.getClassLoader)
 
-  var colOrder = Seq.empty[String] //new ArrayBuffer[String]()
-  var colMap = scala.collection.mutable.Map[String, String]()
-  var pList = new java.util.HashMap[String, Object]()
+  //var colOrder = Seq.empty[String] //new ArrayBuffer[String]()
+  //var colMap = scala.collection.mutable.Map[String, String]()
+  //var pList = new java.util.HashMap[String, Object]()
   val datePattern = "yyyy-MM-dd"
 
   val byMonthsql = "select sum(s.credit) as credit, " +
@@ -91,7 +91,7 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     Some(Future.successful(Ok(Json.obj("status" -> Json.toJson("no access")))))
   }
 
-  def genSql(query: String, colMap: scala.collection.mutable.Map[String, String]): RawSql = {
+  def genSql(query: String, colMap: im.Map[String, String]): RawSql = {
     val rawSqlBld = RawSqlBuilder.parse(query)
     for ((k, v) <- colMap) {
       rawSqlBld.columnMapping(k, v)
@@ -110,8 +110,8 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
    * @tparam T     reflection on return type
    * @return
    */
-  def getList[T : TypeTag](getter: String, query: String, colMap: scala.collection.mutable.Map[String, String],
-                 pList: java.util.HashMap[String, AnyRef], t: T): List[T] = {
+  def getList[T : TypeTag](getter: String, query: String, colMap: im.Map[String, String],
+                 pList: im.Map[String, AnyRef], t: T): List[T] = {
     val rawSql = genSql(query, colMap)
     val myType = getType(t)
     val obj = methodByReflectionO[T](getter, m, myType)
@@ -126,7 +126,7 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
    * @tparam T  generic
    * @return
    */
-  def genJson[T: TypeTag : ClassTag](colOrder: Array[String], outputPage: List[T]): JsValue = {
+  def genJson[T: TypeTag : ClassTag](colOrder: List[String], outputPage: List[T]): JsValue = {
     var jRows: ArrayBuffer[JsValue] = new ArrayBuffer[JsValue](outputPage.length)
     val newRow =
       for {
@@ -179,7 +179,7 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
       case _: Any => Json.toJson("")
     }
 
-  def jsonByReflection[T : TypeTag : ClassTag](colOrder: Array[String], m: ru.Mirror, agg: T): List[JsValue] = {
+  def jsonByReflection[T : TypeTag : ClassTag](colOrder: List[String], m: ru.Mirror, agg: T): List[JsValue] = {
     val jRowBuf = new ListBuffer[JsValue]()
     val myType = getType(agg)
     val newRow =
@@ -205,17 +205,16 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     val key = s"mon-$year-$uid"
     getSeq(key).map {
       case None =>
-        colOrder = Seq("credit","debit","period","periodType")
+        val colOrder = Seq("credit","debit","period","periodType")
 
-        colMap.clear()
-        colMap += "sum(s.credit)" -> "credit"
-        colMap += "sum(s.debit)" -> "debit"
-        colMap += "cast(extract(month from s.trandate) as bigint)" -> "period"
-        colMap += "'N'" -> "periodType"
+        //colMap.clear()
+        val colMap = Map("sum(s.credit)" -> "credit",
+          "sum(s.debit)" -> "debit",
+          "cast(extract(month from s.trandate) as bigint)" -> "period",
+        "'N'" -> "periodType")
 
-        pList.clear()
-        pList += "year" -> year
-        pList += "userid" -> uid
+        val pList = Map("year" -> year,
+          "userid" -> uid)
 
         val aggList: List[Aggregates] = getList("allq", byMonthsql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
         val json: JsValue =
@@ -242,16 +241,16 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     val key = s"cat-$year-$uid"
     getSeq(key).map {
       case None =>
-        colOrder = Seq("credit", "debit", "period", "periodType")
+        val colOrder = Seq("credit", "debit", "period", "periodType")
 
-        colMap = collection.mutable.Map("sum(u.credit)" -> "credit",
+        val colMap = Map("sum(u.credit)" -> "credit",
           "sum(u.debit)" -> "debit",
           "u.trantype" -> "period",
           "'S'" -> "periodType")
 
-        pList.clear()
-        pList += "year" -> year
-        pList += "userid" -> uid
+        //pList.clear()
+        val pList = Map("year" -> year,
+          "userid" -> uid)
 
         val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
         val json: JsValue =
@@ -280,22 +279,21 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     val key = s"qrt-$year-$uid"
     getSeq(key).map {
       case None =>
-        colOrder = Seq("credit", "debit", "period", "periodType")
+        val colOrder = Seq("credit", "debit", "period", "periodType")
 
-        colMap = collection.mutable.Map("sum(s.credit)" -> "credit",
+        val colMap = Map("sum(s.credit)" -> "credit",
           "sum(s.debit)" -> "debit",
           "cast(extract(quarter from s.trandate) as bigint)" -> "period",
           "'Q'" -> "periodType")
 
-        pList.clear()
-        pList += "year" -> year
-        pList += "userid" -> uid
+        //pList.clear()
+        val pList = Map("year" -> year,
+          "userid" -> uid)
 
         val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
         val retJson: JsValue =
           if (aggList.nonEmpty) {
             val result = JsArray(aggList.map(_.toJSON))
-            //val result = genJson[Aggregates](colOrder.toArray, aggList.asInstanceOf[List[Aggregates]])
             setSeq(key, result.toString())
             result
           } else
@@ -316,21 +314,21 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     val key = s"email-$email"
     getSeq(key).map {
       case None =>
-        colOrder = Seq("id","username","password","role","nodata","joined_date","activation","active_timestamp","active")
+        val colOrder = Seq("id","username","password","role","nodata","joined_date","activation","active_timestamp","active")
 
-        colMap.clear()
-        colMap += "u.id" -> "id"
-        colMap += "u.username" -> "username"
-        colMap += "u.password" -> "password"
-        colMap += "u.role" -> "role"
-        colMap += "u.nodata" -> "nodata"
-        colMap += "u.joined_date" -> "joined_date"
-        colMap += "u.activation" -> "activation"
-        colMap += "u.active_timestamp" -> "active_timestamp"
-        colMap += "u.active" -> "active"
+        //colMap.clear()
+        val colMap = Map("u.id" -> "id",
+         "u.username" -> "username",
+          "u.password" -> "password",
+          "u.role" -> "role",
+          "u.nodata" -> "nodata",
+          "u.joined_date" -> "joined_date",
+          "u.activation" -> "activation",
+          "u.active_timestamp" -> "active_timestamp",
+          "u.active" -> "active")
 
-        pList.clear()
-        pList += "email" -> email
+        //pList.clear()
+        val pList = Map("email" -> email)
 
         val aggList = getList("allq", byEmailsql, colMap, pList, EmailUser).asInstanceOf[List[EmailUser]]
         val retJson: JsValue =
@@ -353,30 +351,30 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
    * @return
    */
   def byUsername(username: String) = Action {
-    colMap.clear()
-    colMap += "m.id" -> "id"
-    colMap += "m.email" -> "email"
-    colMap += "m.fname" -> "fname"
-    colMap += "m.phone_number" -> "phone_number"
-    colMap += "m.type" -> "type"
-    colMap += "m.street1" -> "street1"
-    colMap += "m.street2" -> "street2"
-    colMap += "m.city" -> "city"
-    colMap += "m.state" -> "state"
-    colMap += "m.country" -> "country"
-    colMap += "m.joined_date" -> "joined_date"
-    colMap += "m.ip" -> "ip"
-    colMap += "m.lname" -> "lname"
-    colMap += "m.zip" -> "zip"
-    colMap += "m.userid" -> "userid"
-    colMap += "u.id" -> "uid"
-    colMap += "u.password" -> "password"
+    //colMap.clear()
+    val colMap = Map("m.id" -> "id",
+      "m.email" -> "email",
+      "m.fname" -> "fname",
+      "m.phone_number" -> "phone_number",
+      "m.type" -> "type",
+      "m.street1" -> "street1",
+      "m.street2" -> "street2",
+      "m.city" -> "city",
+      "m.state" -> "state",
+      "m.country" -> "country",
+      "m.joined_date" -> "joined_date",
+      "m.ip" -> "ip",
+      "m.lname" -> "lname",
+      "m.zip" -> "zip",
+      "m.userid" -> "userid",
+      "u.id" -> "uid",
+      "u.password" -> "password")
 
-    pList.clear()
-    pList += "username" -> username
+    //pList.clear()
+    val pList = Map("username" -> username)
 
     val aggList = getList("allq", byUsernamesql, colMap, pList, MemberUser)
-    val result = genJson(MemberUser.getColOrder.toArray[String], aggList.asInstanceOf[List[MemberUser]]) //, m)
+    val result = genJson(MemberUser.getColOrder, aggList.asInstanceOf[List[MemberUser]]) //, m)
     Ok(result)
   }
 
@@ -387,16 +385,16 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
    * @return
    */
   def byYears(uid: Integer) = Action {
-    colOrder = Seq("year")
+    val colOrder = Seq("year")
 
-    colMap.clear()
-    colMap += "extract(year from t.trandate)" -> "year"
+    //colMap.clear()
+    val colMap = Map("extract(year from t.trandate)" -> "year")
 
-    pList.clear()
-    pList += "userid" -> uid
+    //pList.clear()
+    val pList = Map("userid" -> uid)
 
     val aggList = getList("allq", getYearssql, colMap, pList, Years)
-    val result = genJson(colOrder.toArray[String], aggList.asInstanceOf[List[Years]]) //, m)
+    val result = genJson(colOrder.toList, aggList.asInstanceOf[List[Years]]) //, m)
     Ok(result)
   }
 

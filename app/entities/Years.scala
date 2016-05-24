@@ -8,6 +8,7 @@ import common.Dao
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.{mutable => mu, immutable => im}
 
 @Entity
 @Sql class Years {
@@ -27,7 +28,7 @@ object Years extends Dao(classOf[Years]){
    * @param pList params
    * @return
    */
-  def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[Years] = {
+  def allq(sql:RawSql, pList:Option[im.Map[String, AnyRef]]) : List[Years] = {
     val q = Years.find
     if (pList.isDefined)
       for ((k:String,v:Object) <- pList.get) {

@@ -8,6 +8,7 @@ import common.{BaseObject, Dao}
 import models._
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.{mutable => mu, immutable => im}
 
 /**
  * Created by hkatz on 3/20/15.
@@ -43,7 +44,7 @@ object Aggregates extends Dao(classOf[Aggregates]){
    * @param pList param list
    * @return
    */
-  def allq(sql:RawSql, pList:Option[java.util.HashMap[String, AnyRef]]) : List[Aggregates] = {
+  def allq(sql:RawSql, pList:Option[im.Map[String, AnyRef]]) : List[Aggregates] = {
     val q = Aggregates.find
     if (pList.isDefined)
         for ((k:String,v:Object) <- pList.get) {

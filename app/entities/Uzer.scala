@@ -87,22 +87,6 @@ object Uzer extends Dao(classOf[Uzer]) {
     )
   }
 
-  def allq(sql: RawSql, pList:Option[java.util.HashMap[String, AnyRef]]): List[Uzer] = {
-    var users: List[Uzer] = List.empty[Uzer]
-    val q = Uzer.find
-    if (pList.isDefined)
-      for ((k:String,v:Object) <- pList.get) {
-        q.setParameter(k, v)
-      }
-    q.setRawSql(sql)
-    try {
-      users = q.findList().asScala.toList
-      users
-    } catch {
-      case e: Exception => users
-    }
-  }
-
   def create(username: String, password: String, role: String, nodata: String,
              joined_Date: Date, activation: String, active_timestamp: Date, active: String): Unit = {
     val uz = new Uzer
