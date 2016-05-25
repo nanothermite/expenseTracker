@@ -1,13 +1,11 @@
-package svcs
+package models.services
 
 import java.nio.charset.Charset
-import javax.inject.Inject
 
 import common.myTypes
 import com.avaje.ebean._
 import entities.{Member, MemberUser}
 import models.SecTokens
-import play.api.cache.CacheApi
 import utils.Sha256
 
 import scala.collection.{immutable => im, mutable => mu}
@@ -22,7 +20,7 @@ trait ValidatorService {
   def checkSocial(token: SecTokens): Option[Member]
 }
 
-class ValidatorServiceImpl @Inject()(cache: CacheApi) extends ValidatorService with myTypes with Sha256 {
+class ValidatorServiceImpl /*@Inject()(cache: CacheApi)*/ extends ValidatorService with myTypes with Sha256 {
 
   val m = ru.runtimeMirror(getClass.getClassLoader)
 

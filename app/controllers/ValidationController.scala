@@ -8,10 +8,11 @@ import akka.actor.{ActorSystem, _}
 import akka.pattern.ask
 import akka.util.Timeout
 import models.SecTokens
+import models.services.ValidatorService
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc._
-import svcs.ValidatorService
+
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
