@@ -10,7 +10,7 @@ import com.mohiva.play.silhouette.impl.daos.DelegableAuthInfoDAO
 import com.mohiva.play.silhouette.impl.providers._
 import com.mohiva.play.silhouette.impl.providers.oauth1._
 import com.mohiva.play.silhouette.impl.providers.oauth1.secrets.{CookieSecretProvider, CookieSecretSettings}
-import com.mohiva.play.silhouette.impl.providers.oauth1.services.PlayOAuth1Service
+import services.PlayOAuth1Service
 import com.mohiva.play.silhouette.impl.providers.oauth2._
 import com.mohiva.play.silhouette.impl.providers.oauth2.state.{CookieStateProvider, CookieStateSettings, DummyStateProvider}
 import com.mohiva.play.silhouette.impl.providers.openid.YahooProvider
@@ -28,6 +28,7 @@ import play.api.Configuration
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.openid.OpenIdClient
 import play.api.libs.ws.WSClient
+import svcs.{ValidatorServiceImpl, ValidatorService}
 
 /**
  * The Guice module which wires all Silhouette dependencies.
@@ -50,6 +51,7 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
     bind[FingerprintGenerator].toInstance(new DefaultFingerprintGenerator(false))
     bind[EventBus].toInstance(EventBus())
     bind[Clock].toInstance(Clock())
+    bind[ValidatorService].to[ValidatorServiceImpl]
   }
 
   /**

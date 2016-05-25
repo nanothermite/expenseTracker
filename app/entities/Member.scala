@@ -10,6 +10,7 @@ import org.joda.time.DateTime
 import utils.DateFormatter
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.collection.{immutable => im, mutable => mu}
 
 /**
  * Created by hkatz on 3/21/15.
@@ -30,10 +31,17 @@ object Member extends Dao(classOf[Member]) {
     Some(objList)
   }
 
-  def allq(sql:RawSql) : List[Member] = {
-    val q = find
+  def allq(sql:RawSql, pList:Option[im.Map[String, AnyRef]]) : List[Member] = {
+    val q = Member.find
+    if (pList.isDefined)
+      for ((k:String,v:Object) <- pList.get) {
+        q.setParameter(k, v)
+      }
     q.setRawSql(sql)
-    q.findList().asScala.toList
+    var resList : java.util.List[Member] = q.findList()
+    if (resList.isEmpty)
+      resList = new java.util.ArrayList[Member]
+    resList.asScala.toList
   }
 
   def getColOrder: List[String] = List("id", "email", "fname", "lname", "phone_number", "type",

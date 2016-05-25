@@ -8,9 +8,8 @@ import com.avaje.ebean.RawSql
 import com.avaje.ebean.annotation.Sql
 import common.Dao
 
-import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-import scala.collection.{mutable => mu, immutable => im}
+import scala.collection.{immutable => im, mutable => mu}
 
 /**
  * Created by hkatz on 3/26/15.

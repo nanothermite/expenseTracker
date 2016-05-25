@@ -24,6 +24,7 @@ GET          /expense/get/Username/:username                   controllers.Query
 GET          /expense/get/Years/:uid                           controllers.QueryController.byYears(uid: Integer)
 
 GET          /expense/valid/User/:userid/:pwd                  controllers.ValidationController.validateUser(userid: String, pwd: String)
+GET          /expense/valid/Social/:email                      controllers.ValidationController.validateSocial(email: String)
 GET          /expense/invalid/User/:sess/:uid                  controllers.ValidationController.invalidateUser(sess: String, uid: Int)
 GET          /expense/dumpsess                                 controllers.ValidationController.dumpMap
 
