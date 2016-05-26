@@ -2,25 +2,24 @@ package controllers
 
 import javax.inject.Inject
 
-import _root_.common.Shared
 import actors._
 import akka.actor.{ActorSystem, _}
 import akka.pattern.ask
 import akka.util.Timeout
+import entities.MemberUser
 import models.SecTokens
 import models.services.ValidatorService
 import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc._
+import utils.Sha256
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class ValidationController @Inject()(system: ActorSystem, validator: ValidatorService) extends Controller {
+class ValidationController @Inject()(system: ActorSystem, validator: ValidatorService) extends Controller with Sha256 {
   val secActor = system.actorOf(SecurityActor.props, "sec-actor")
-
-  val r = Shared.r
 
   implicit val timeout: Timeout = 5.seconds
   val waitTime = 700.milli
@@ -55,33 +54,34 @@ class ValidationController @Inject()(system: ActorSystem, validator: ValidatorSe
     Ok(JsObject(sessJsonObj))
   }
 
-  def ranSession = (1 to 50).map(_ => r.nextPrintableChar()).mkString("")
+  private def coreValidate(mu: Option[MemberUser], request: Request[AnyContent]): JsObject =
+    if (mu.isDefined) {
+      val curSessAuth =
+        request.session.get("sessAuth").map { sessAuth =>
+          Some(sessAuth)
+        }.getOrElse(
+          Some(ranStr(50))
+        )
 
-  def validateSocial(email: String) = Action {
-    val memberOpt =
-      validator.checkSocial(SecTokens(None, None, Some(email)))
-
-    Ok(if (memberOpt.isDefined) {
-      secActor ! InitSession(ranSession, memberOpt.get.id.toInt)
-      Json.obj("access" -> "auth", "uid" -> memberOpt.get.id, "welcome" -> memberOpt.get.fname, "sessAuth" -> ranSession)
+      secActor ! InitSession(curSessAuth.get, mu.get.id.toInt)
+      Json.obj("access" -> "auth", "uid" -> mu.get.uid, "welcome" -> mu.get.fname,
+        "sessAuth" -> curSessAuth.get)
     } else
       Json.obj("access" -> "denied")
-    )
+
+  def validateSocial(email: String, provider: String) = Action { request =>
+    val memberUserOpt =
+      validator.checkSocial(SecTokens(None, None, Some(email), Some(provider)))
+    Ok(coreValidate(memberUserOpt, request))
   }
 
-  def validateUser(name: String, passwd: String) = Action {
+  def validateUser(name: String, passwd: String) = Action { request =>
     val isEmail = name.contains("@")
     val memberUserOpt =
       if (isEmail)
-        validator.checkEmailPwd(SecTokens(None, Some(passwd), Some(name)))
+        validator.checkEmailPwd(SecTokens(None, Some(passwd), Some(name), None))
       else
-        validator.checkUserPwd(SecTokens(Some(name), Some(passwd), None))
-
-    Ok(if (memberUserOpt.isDefined) {
-      secActor ! InitSession(ranSession, memberUserOpt.get.id.toInt)
-      Json.obj("access" -> "auth", "uid" -> memberUserOpt.get.id, "welcome" -> memberUserOpt.get.fname, "sessAuth" -> ranSession)
-    } else
-      Json.obj("access" -> "denied")
-    )
+        validator.checkUserPwd(SecTokens(Some(name), Some(passwd), None, None))
+      Ok(coreValidate(memberUserOpt, request))
   }
 }

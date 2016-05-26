@@ -7,8 +7,11 @@ package utils
 import java.nio.charset.Charset
 import java.security.MessageDigest
 
+import common.Shared
+
 trait Sha256 extends OneWayHash {
   private val messageDigest = MessageDigest.getInstance("sha-256")
+  val r = Shared.r
 
   def toHexString(source: String, charset: Charset): String = {
     val bytes = source.getBytes(charset)
@@ -17,4 +20,6 @@ trait Sha256 extends OneWayHash {
     val hexString = new String(hexCharArray)
     hexString
   }
+
+  def ranStr(limit: Int) = (1 to limit).map(_ => r.nextPrintableChar()).mkString("")
 }

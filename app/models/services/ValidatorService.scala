@@ -7,6 +7,7 @@ import common.myTypes
 import entities.{Member, MemberUser}
 import models.SecTokens
 import utils.Sha256
+
 import scala.reflect.runtime.{universe => ru}
 
 trait ValidatorService {
@@ -14,7 +15,7 @@ trait ValidatorService {
 
   def checkEmailPwd(token: SecTokens): Option[MemberUser]
 
-  def checkSocial(token: SecTokens): Option[Member]
+  def checkSocial(token: SecTokens): Option[MemberUser]
 }
 
 class ValidatorServiceImpl @Inject()(daoSvc: DaoService) extends ValidatorService with myTypes with Sha256 {
@@ -29,9 +30,6 @@ class ValidatorServiceImpl @Inject()(daoSvc: DaoService) extends ValidatorServic
     "from Member m, Uzer u " +
     "where m.uid = u.id and " +
     "m.email = :email"
-  val validateSocialSql = "select m.fname " +
-    "from Member m " +
-    "where m.email = :email"
 
   override def checkUserPwd(token: SecTokens): Option[MemberUser] = {
     val name = token.userid.get
@@ -65,11 +63,24 @@ class ValidatorServiceImpl @Inject()(daoSvc: DaoService) extends ValidatorServic
     valid
   }
 
-  override def checkSocial(token: SecTokens): Option[Member] = {
+  override def checkSocial(token: SecTokens): Option[MemberUser] = {
     val email = token.email.get
-    val colMap = Map("m.fname" -> "fname")
-    val pList = Map("email" -> email)
-    val pwdList = daoSvc.getList("allq", validateSocialSql, colMap, pList, Member)
-    if (pwdList.nonEmpty) Some(pwdList.head.asInstanceOf[Member]) else None
+    val memberMatched = Member.find.where.eq("email", email).findUnique
+    if (memberMatched != null) {
+      //val emailPattern = "(\\S+)@([\\S\\.]+)".r
+      //val emailPattern(name, domain) = email
+      val member = memberMatched
+      val socialUser = member.uid
+/*      val socialUser =
+        if (userMatches)
+          userMatches.get
+        else
+          Uzer.socialUser(s"$name${token.provider.get}",
+            toHexString(ranStr(8), Charset.forName("UTF-8")),
+            "D", (new DateTime()).toDate) */
+      Some(MemberUser.socialCreate(member.email, member.fname, member.lname, member.`type`, member.country,
+        member.joined_date, member.ip, member.zip, socialUser.id, socialUser.password))
+    } else
+      None
   }
 }

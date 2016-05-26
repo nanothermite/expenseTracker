@@ -112,7 +112,7 @@ object MemberUser extends Dao(classOf[MemberUser]){
   def create(id: Long, email: String, fname: String, lname: String, phone_number: String, `type`: String,
              street1: String, street2: String, city: String, state: String, country: String, joined_date: Date,
              ip: String, zip: String, userid: String, uid: Long, password: String): Unit = {
-    var mu = new MemberUser
+    val mu = new MemberUser
     mu.id = id
     mu.email = email
     mu.fname = fname
@@ -130,7 +130,25 @@ object MemberUser extends Dao(classOf[MemberUser]){
     mu.userid = userid
     mu.uid = uid
     mu.password = password
-    save(mu)
+    //save(mu)
+  }
+
+  //TODO - check req'd fields
+  def socialCreate(email: String, fname: String, lname: String, `type`: String, country: String,
+                   joined_date: Date, ip: String, zip: String, uid: Long, password: String): MemberUser = {
+    val smu = new MemberUser
+    smu.email = email
+    smu.fname = fname
+    smu.lname = lname
+    smu.`type` = `type`
+    smu.country = country
+    smu.joined_date = joined_date
+    smu.ip = ip
+    smu.zip = zip
+    smu.uid = uid
+    smu.password = password
+    //save(smu)
+    smu
   }
 
   def getColOrder: List[String] = List("id", "email", "fname", "lname", "phone_number", "type",

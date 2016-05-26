@@ -4,12 +4,13 @@ import java.util
 import java.util.Date
 import javax.persistence._
 import javax.validation.constraints.{NotNull, Pattern}
-import play.api.libs.json._
-import com.avaje.ebean.RawSql
+
 import common.{BaseObject, Dao}
 import org.joda.time.DateTime
+import play.api.libs.json._
 import play.data.validation.Constraints
 import utils.DateFormatter
+
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
@@ -99,6 +100,17 @@ object Uzer extends Dao(classOf[Uzer]) {
     uz.active_timestamp = active_timestamp
     uz.active = active
     save(uz)
+  }
+
+  def socialUser(username: String, password: String, role: String, joined_Date: Date): Uzer = {
+    val socialUser = new Uzer
+    socialUser.username = username
+    socialUser.password = password
+    socialUser.role = role
+    socialUser.active = "Y"
+    socialUser.joined_date = joined_Date
+    Uzer.save(socialUser)
+    socialUser
   }
 
   def getColOrder: List[String] = List("id","username","password","role","nodata","joined_date",
