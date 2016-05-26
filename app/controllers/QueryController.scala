@@ -3,13 +3,13 @@ package controllers
 import java.util.Date
 import javax.inject.Inject
 
-import _root_.common.{BaseObject, Shared, myTypes}
-import com.avaje.ebean._
+import _root_.common.{Shared, myTypes}
 import com.mohiva.play.silhouette.api.{Environment, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
 import entities._
 import models.User
+import models.services.DaoService
 import play.api.i18n.MessagesApi
 import play.api.libs.json.{JsValue, _}
 import play.api.mvc._
@@ -24,7 +24,8 @@ import scala.reflect.runtime.{universe => ru}
 
 class QueryController @Inject() (val messagesApi: MessagesApi,
                                  val env: Environment[User, CookieAuthenticator],
-                                 socialProviderRegistry: SocialProviderRegistry) extends Silhouette[User, CookieAuthenticator]
+                                 socialProviderRegistry: SocialProviderRegistry,
+                                 val daoSVC: DaoService) extends Silhouette[User, CookieAuthenticator]
   with myTypes with SeqOps {
 
   val r = Shared.r
@@ -88,33 +89,6 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     Some(Future.successful(Ok(Json.obj("status" -> Json.toJson("no access")))))
   }
 
-  def genSql(query: String, colMap: im.Map[String, String]): RawSql = {
-    val rawSqlBld = RawSqlBuilder.parse(query)
-    for ((k, v) <- colMap) {
-      rawSqlBld.columnMapping(k, v)
-    }
-    rawSqlBld.create()
-  }
-
-  /**
-   * generate collection of T objects using getter
-    *
-    * @param getter method to invoke
-   * @param query  actual
-   * @param colMap for ebean
-   * @param pList  parameters to query
-   * @param t      for reflection
-   * @tparam T     reflection on return type
-   * @return
-   */
-  def getList[T : TypeTag](getter: String, query: String, colMap: im.Map[String, String],
-                 pList: im.Map[String, AnyRef], t: T): List[T] = {
-    val rawSql = genSql(query, colMap)
-    val myType = getType(t)
-    val obj = methodByReflectionO[T](getter, m, myType)
-    obj(rawSql, Some(pList)).asInstanceOf[List[T]]
-  }
-
   /**
    * generate Json return
     *
@@ -133,37 +107,6 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     jRows ++= newRow
     val jRowsList: JsValue = JsArray(jRows.toList)
     Json.obj("data" -> jRowsList)
-  }
-
-  /**
-   * reflection on Class
-    *
-    * @param name  method
-   * @param m     runtime mirror
-   * @param obj   values in obj
-   * @return
-   */
-  def methodByReflectionC(name: String, m: ru.Mirror, obj: AnyRef): MethodMirror = {
-    val methodX = ru.typeOf[obj.type].decl(ru.TermName(name)).asMethod
-    val im = m.reflect(obj)
-    im.reflectMethod(methodX)
-  }
-
-  /**
-   * reflection on Object
-    *
-    * @param name method
-   * @param m    runtime
-   * @param tru  reflection
-   * @tparam T   internals
-   * @return
-   */
-  def methodByReflectionO[T : TypeTag](name: String, m: ru.Mirror, tru: Type): MethodMirror = {
-    val modX = tru.termSymbol.asModule
-    val methodX = tru.decl(ru.TermName(name)).asMethod
-    val mm = m.reflectModule(modX)
-    val im = m.reflect(mm.instance)
-    im.reflectMethod(methodX)
   }
 
   def mirrorObjMatch[T : TypeTag : ClassTag](obj : Any) : JsValue =
@@ -202,18 +145,14 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     val key = s"mon-$year-$uid"
     getSeq(key).map {
       case None =>
-        val colOrder = Seq("credit","debit","period","periodType")
-
-        //colMap.clear()
         val colMap = Map("sum(s.credit)" -> "credit",
           "sum(s.debit)" -> "debit",
           "cast(extract(month from s.trandate) as bigint)" -> "period",
         "'N'" -> "periodType")
-
         val pList = Map("year" -> year,
           "userid" -> uid)
 
-        val aggList: List[Aggregates] = getList("allq", byMonthsql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
+        val aggList: List[Aggregates] = daoSVC.getList("allq", byMonthsql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
         val json: JsValue =
           if (aggList.nonEmpty) {
             val result = JsArray(aggList.map(_.toJSON))
@@ -238,18 +177,14 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     val key = s"cat-$year-$uid"
     getSeq(key).map {
       case None =>
-        val colOrder = Seq("credit", "debit", "period", "periodType")
-
         val colMap = Map("sum(u.credit)" -> "credit",
           "sum(u.debit)" -> "debit",
           "u.trantype" -> "period",
           "'S'" -> "periodType")
-
-        //pList.clear()
         val pList = Map("year" -> year,
           "userid" -> uid)
 
-        val aggList = getList("allq", byCategorysql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
+        val aggList = daoSVC.getList("allq", byCategorysql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
         val json: JsValue =
           if (aggList.nonEmpty) {
             val result = JsArray(aggList.map(_.toJSON))
@@ -276,18 +211,14 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     val key = s"qrt-$year-$uid"
     getSeq(key).map {
       case None =>
-        val colOrder = Seq("credit", "debit", "period", "periodType")
-
         val colMap = Map("sum(s.credit)" -> "credit",
           "sum(s.debit)" -> "debit",
           "cast(extract(quarter from s.trandate) as bigint)" -> "period",
           "'Q'" -> "periodType")
-
-        //pList.clear()
         val pList = Map("year" -> year,
           "userid" -> uid)
 
-        val aggList = getList("allq", byQuartersql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
+        val aggList = daoSVC.getList("allq", byQuartersql, colMap, pList, Aggregates).asInstanceOf[List[Aggregates]]
         val retJson: JsValue =
           if (aggList.nonEmpty) {
             val result = JsArray(aggList.map(_.toJSON))
@@ -312,8 +243,6 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
     getSeq(key).map {
       case None =>
         val colOrder = Seq("id","username","password","role","nodata","joined_date","activation","active_timestamp","active")
-
-        //colMap.clear()
         val colMap = Map("u.id" -> "id",
          "u.username" -> "username",
           "u.password" -> "password",
@@ -323,11 +252,9 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
           "u.activation" -> "activation",
           "u.active_timestamp" -> "active_timestamp",
           "u.active" -> "active")
-
-        //pList.clear()
         val pList = Map("email" -> email)
 
-        val aggList = getList("allq", byEmailsql, colMap, pList, EmailUser).asInstanceOf[List[EmailUser]]
+        val aggList = daoSVC.getList("allq", byEmailsql, colMap, pList, EmailUser).asInstanceOf[List[EmailUser]]
         val retJson: JsValue =
           if (aggList.nonEmpty) {
             val result = JsArray(aggList.map(_.toJSON))
@@ -348,7 +275,6 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
    * @return
    */
   def byUsername(username: String) = Action {
-    //colMap.clear()
     val colMap = Map("m.id" -> "id",
       "m.email" -> "email",
       "m.fname" -> "fname",
@@ -366,11 +292,9 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
       "m.userid" -> "userid",
       "u.id" -> "uid",
       "u.password" -> "password")
-
-    //pList.clear()
     val pList = Map("username" -> username)
 
-    val aggList = getList("allq", byUsernamesql, colMap, pList, MemberUser)
+    val aggList = daoSVC.getList("allq", byUsernamesql, colMap, pList, MemberUser)
     val result = genJson(MemberUser.getColOrder, aggList.asInstanceOf[List[MemberUser]]) //, m)
     Ok(result)
   }
@@ -383,33 +307,12 @@ class QueryController @Inject() (val messagesApi: MessagesApi,
    */
   def byYears(uid: Integer) = Action {
     val colOrder = Seq("year")
-
-    //colMap.clear()
     val colMap = Map("extract(year from t.trandate)" -> "year")
-
-    //pList.clear()
     val pList = Map("userid" -> uid)
 
-    val aggList = getList("allq", getYearssql, colMap, pList, Years)
+    val aggList = daoSVC.getList("allq", getYearssql, colMap, pList, Years)
     val result = genJson(colOrder.toList, aggList.asInstanceOf[List[Years]]) //, m)
     Ok(result)
   }
 
-  /**
-  * speed up by mem caching the crud value
- *
-  * @param id synth
-  * @param key pattern
-    * @param valOpt optional
-    * @return
-    */
-  def processGet(id: Long, key: String, valOpt: Option[BaseObject]): JsValue = {
-    val jSon =
-      if (valOpt.isDefined) {
-        setSeq(key, valOpt.get.toJSON.toString())
-        valOpt.get.toJSON
-      } else
-        Json.obj("badkey" -> id)
-    jSon
-  }
 }
