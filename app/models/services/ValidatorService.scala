@@ -31,6 +31,11 @@ class ValidatorServiceImpl @Inject()(daoSvc: DaoService) extends ValidatorServic
     "where m.uid = u.id and " +
     "m.email = :email"
 
+  /**
+    * username & pwd to authenticate
+    * @param token username & pwd
+    * @return
+    */
   override def checkUserPwd(token: SecTokens): Option[MemberUser] = {
     val name = token.userid.get
     val passwd = token.passwd.get
@@ -47,6 +52,11 @@ class ValidatorServiceImpl @Inject()(daoSvc: DaoService) extends ValidatorServic
     valid
   }
 
+  /**
+    * use email & pwd to authenticate
+    * @param token email and pwd
+    * @return
+    */
   override def checkEmailPwd(token: SecTokens): Option[MemberUser] = {
     val email = token.email.get
     val passwd = token.passwd.get
@@ -63,21 +73,16 @@ class ValidatorServiceImpl @Inject()(daoSvc: DaoService) extends ValidatorServic
     valid
   }
 
+  /**
+    * only using email locate existing matching member and build MemberUser
+    * @param token email and provider
+    * @return
+    */
   override def checkSocial(token: SecTokens): Option[MemberUser] = {
     val email = token.email.get
-    val memberMatched = Member.find.where.eq("email", email).findUnique
-    if (memberMatched != null) {
-      //val emailPattern = "(\\S+)@([\\S\\.]+)".r
-      //val emailPattern(name, domain) = email
-      val member = memberMatched
+    val member = Member.find.where.eq("email", email).findUnique
+    if (member != null) {
       val socialUser = member.uid
-/*      val socialUser =
-        if (userMatches)
-          userMatches.get
-        else
-          Uzer.socialUser(s"$name${token.provider.get}",
-            toHexString(ranStr(8), Charset.forName("UTF-8")),
-            "D", (new DateTime()).toDate) */
       Some(MemberUser.socialCreate(member.email, member.fname, member.lname, member.`type`, member.country,
         member.joined_date, member.ip, member.zip, socialUser.id, socialUser.password))
     } else

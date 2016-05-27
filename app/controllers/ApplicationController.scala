@@ -1,15 +1,20 @@
 package controllers
 
+import java.nio.charset.Charset
 import javax.inject.Inject
 
 import com.mohiva.play.silhouette.api.{Environment, LogoutEvent, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import com.mohiva.play.silhouette.impl.providers.SocialProviderRegistry
+import entities.{Member, MemberUser, Uzer}
 import forms._
-import models.User
+import models.{SecTokens, User}
+import models.services.ValidatorService
+import org.joda.time.DateTime
 import play.api.i18n.MessagesApi
 import play.api.Logger
 import play.api.mvc.Action
+import utils.Sha256
 
 import scala.concurrent.Future
 
@@ -23,8 +28,8 @@ import scala.concurrent.Future
 class ApplicationController @Inject()(
   val messagesApi: MessagesApi,
   val env: Environment[User, CookieAuthenticator],
-  socialProviderRegistry: SocialProviderRegistry)
-  extends Silhouette[User, CookieAuthenticator] {
+  socialProviderRegistry: SocialProviderRegistry,
+  val validator: ValidatorService) extends Silhouette[User, CookieAuthenticator] with Sha256 {
 
   /**
    * Handles the index action.
@@ -35,8 +40,25 @@ class ApplicationController @Inject()(
     Future.successful {
       val u = request.identity
       Logger.info(s"got user before main2: ${u.firstName}")
-      if (u.email.isDefined) {
 
+      // generate member, user based on social provider info (email) and memberuser
+      if (u.email.isDefined) {
+        val provider = request.session.get("provider").map { prov => prov
+        }.getOrElse("facebook")
+        val memberUserOpt = validator.checkSocial(SecTokens(None, None, u.email, Some(provider)))
+        if (!memberUserOpt.isDefined) {
+          val emailPattern = "(\\S+)@([\\S\\.]+)".r
+          val emailPattern(name, domain) = u.email.get
+          val joinedDate = (new DateTime()).toDate
+          val role = "D"
+          //TODO params & geoip to track
+          val socialUser =
+            Uzer.socialUser(s"$name${provider}".take(16), toHexString(ranStr(8), Charset.forName("UTF-8")), role,  joinedDate)
+          val socialMember = Member.socialMember(u.email.get, name, provider, "D", "DEFAULT", joinedDate,
+            request.remoteAddress, "XXXX", socialUser)
+          MemberUser.socialCreate(socialMember.email, socialMember.fname, socialMember.lname, socialMember.`type`, socialMember.country,
+            socialMember.joined_date, socialMember.ip, socialMember.zip, socialUser.id, socialUser.password)
+        }
       }
       Ok(views.html.main2(u))
     }

@@ -87,6 +87,22 @@ object Member extends Dao(classOf[Member]) {
     save(member)
   }
 
+  def socialMember(email: String, fname: String, lname: String, `type`: String,
+             country: String,joined_date: Date, ip: String, zip: String, uid: Uzer): Member = {
+    val member = new Member
+    member.email = email
+    member.fname = fname
+    member.lname = lname
+    member.`type` = `type`
+    member.country = country
+    member.joined_date = joined_date
+    member.ip = ip
+    member.zip = zip
+    member.uid = uid
+    save(member)
+    member
+  }
+
   def apply(email: String,fname: String,lname: String,phone_number: Option[String],`type`: String,
             street1: Option[String],street2: Option[String],city: Option[String],state: Option[String],country: String,joined_date: Date,
             ip: String,zip: String, userid: Option[String]): Member = {
