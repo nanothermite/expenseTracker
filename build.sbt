@@ -1,4 +1,4 @@
-name := """playscala1"""
+name := """expenseTracker"""
 
 version := "1.0-SNAPSHOT"
 
