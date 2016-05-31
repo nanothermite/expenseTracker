@@ -39,7 +39,7 @@ class ApplicationController @Inject()(
   def index = SecuredAction.async { implicit request =>
     Future.successful {
       val u = request.identity
-      Logger.info(s"got user before main2: ${u.firstName}")
+      Logger.info(s"got user before secure: ${u.firstName}")
 
       // generate member, user based on social provider info (email) and memberuser
       if (u.email.isDefined) {
@@ -60,14 +60,14 @@ class ApplicationController @Inject()(
             socialMember.joined_date, socialMember.ip, socialMember.zip, socialUser.id, socialUser.password)
         }
       }
-      Ok(views.html.main2(u))
+      Ok(views.html.secure(u))
     }
   }
 
   def landing = Action.async { implicit request =>
     Future.successful {
-      Logger.info(s"unsecure landing main3")
-      Ok(views.html.main3())
+      Logger.info(s"unsecure landing insecure")
+      Ok(views.html.insecure())
     }
   }
 
