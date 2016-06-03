@@ -146,6 +146,7 @@ object MemberUser extends Dao(classOf[MemberUser]){
     smu.ip = ip
     smu.zip = zip
     smu.uid = uid
+    smu.id = uid
     smu.password = password
     //save(smu)
     smu

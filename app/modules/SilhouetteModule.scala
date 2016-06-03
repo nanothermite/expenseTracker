@@ -1,5 +1,6 @@
 package modules
 
+import actors.SecurityActor
 import com.google.inject.{AbstractModule, Provides}
 import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
 import com.mohiva.play.silhouette.api.services._
@@ -25,6 +26,7 @@ import net.ceedubs.ficus.Ficus._
 import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 import net.codingwell.scalaguice.ScalaModule
 import play.api.Configuration
+import play.api.libs.concurrent.AkkaGuiceSupport
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.openid.OpenIdClient
 import play.api.libs.ws.WSClient
@@ -32,7 +34,7 @@ import play.api.libs.ws.WSClient
 /**
  * The Guice module which wires all Silhouette dependencies.
  */
-class SilhouetteModule extends AbstractModule with ScalaModule {
+class SilhouetteModule extends AbstractModule with ScalaModule with AkkaGuiceSupport {
 
   /**
    * Configures the module.
@@ -52,6 +54,7 @@ class SilhouetteModule extends AbstractModule with ScalaModule {
     bind[Clock].toInstance(Clock())
     bind[ValidatorService].to[ValidatorServiceImpl]
     bind[DaoService].to[DaoServiceImpl]
+    bindActor[SecurityActor]("sec-actor")
   }
 
   /**

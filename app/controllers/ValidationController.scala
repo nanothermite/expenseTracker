@@ -1,6 +1,6 @@
 package controllers
 
-import javax.inject.Inject
+import javax.inject._
 
 import actors._
 import akka.actor.{ActorSystem, _}
@@ -18,8 +18,9 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-class ValidationController @Inject()(system: ActorSystem, validator: ValidatorService) extends Controller with Sha256 {
-  val secActor = system.actorOf(SecurityActor.props, "sec-actor")
+@Singleton
+class ValidationController @Inject()(system: ActorSystem, validator: ValidatorService, @Named("sec-actor") secActor: ActorRef) extends Controller with Sha256 {
+//  val secActor = system.actorOf(SecurityActor.props, "sec-actor")
 
   implicit val timeout: Timeout = 5.seconds
   val waitTime = 700.milli
@@ -64,7 +65,7 @@ class ValidationController @Inject()(system: ActorSystem, validator: ValidatorSe
         )
 
       secActor ! InitSession(curSessAuth.get, mu.get.id.toInt)
-      Json.obj("access" -> "auth", "uid" -> mu.get.uid, "welcome" -> mu.get.fname,
+      Json.obj("access" -> "auth", "uid" -> mu.get.id, "welcome" -> mu.get.fname,
         "sessAuth" -> curSessAuth.get)
     } else
       Json.obj("access" -> "denied")
@@ -75,13 +76,30 @@ class ValidationController @Inject()(system: ActorSystem, validator: ValidatorSe
     Ok(coreValidate(memberUserOpt, request))
   }
 
-  def validateUser(name: String, passwd: String) = Action { request =>
+  def validateUser(name: String, passwd: String) = Action { implicit request =>
     val isEmail = name.contains("@")
     val memberUserOpt =
       if (isEmail)
         validator.checkEmailPwd(SecTokens(None, Some(passwd), Some(name), None))
       else
         validator.checkUserPwd(SecTokens(Some(name), Some(passwd), None, None))
-      Ok(coreValidate(memberUserOpt, request))
+    Ok(coreValidate(memberUserOpt, request))
+  }
+
+  def validateUserJson(name: String, passwd: String) = Action { implicit request =>
+    val isEmail = name.contains("@")
+    val memberUserOpt =
+      if (isEmail)
+        validator.checkEmailPwd(SecTokens(None, Some(passwd), Some(name), None))
+      else
+        validator.checkUserPwd(SecTokens(Some(name), Some(passwd), None, None))
+    val isAuth = coreValidate(memberUserOpt, request)
+    if ((isAuth \ "access").get.asInstanceOf[JsString].value == "denied") {
+      Logger.info("validateuser - denied")
+      Ok(isAuth)
+    } else {
+      Logger.info("validateuser - auth - to secure")
+      Ok(views.html.secure(memberUserOpt.get))
+    }
   }
 }
